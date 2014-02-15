@@ -28,7 +28,7 @@ module RightScale
     module Parser
 
       class ReXml
-        def self.parse(body)
+        def self.parse(body, options = {})
           parse_rexml_node ::REXML::Document::new(body).root
         end
         

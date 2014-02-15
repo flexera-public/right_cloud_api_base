@@ -30,7 +30,7 @@ module RightScale
     # attempts who may take upto DEFAULT_REITERATION_TIME secsons.
     #
     class RetryManager < Routine
-      class Error < CloudApi::Error
+      class Error < CloudApi::HttpError
       end
       
       DEFAULT_RETRY_COUNT      =   2
@@ -66,9 +66,21 @@ module RightScale
         end
         
         # Complain on any issue
-        fail(Error::new("No more retries left")) if max_retry_count < data[:vars][:retry][:count]
-        fail(Error::new("Time is over"))         if Time.now        > data[:vars][:system][:started_at] + reiteration_time
-        
+        if max_retry_count < @data[:vars][:retry][:count]
+          error_message = "RetryManager: No more retries left."
+        elsif Time.now > @data[:vars][:system][:started_at] + reiteration_time
+          error_message = "RetryManager: Retry timeout of #{reiteration_time} seconds has been reached."
+        end
+
+        # Raise exception if request runs out-of-time or attempts.
+        if error_message
+          http_data     = @data[:vars][:retry][:http]
+          http_code     = http_data && http_data[:code]
+          http_message  = http_data && http_data[:message]
+          error_message = "#{http_message}\n#{error_message}" if http_message
+          raise Error::new(http_code, error_message)
+        end
+
         # Continue (with a delay when needed)
         if data[:vars][:retry][:sleep_time] > 0
           cloud_api_logger.log("Sleeping for #{data[:vars][:retry][:sleep_time]} seconds before retry attempt ##{data[:vars][:retry][:count]}", :retry_manager)

@@ -93,6 +93,7 @@ module RightScale
                 fail(HttpError::new(code, error_message))
               when :reconnect_and_retry
                 close_current_connection_proc && close_current_connection_proc.call('Error pattern match')
+                @data[:vars][:retry][:http] = { :code => code, :message => error_message }
                 fail(RetryAttempt::new)
               when :abort
                 fail(HttpError::new(code, error_message))
@@ -101,6 +102,7 @@ module RightScale
                                        :routine => self,
                                        :pattern => pattern,
                                        :opts    => opts)
+                @data[:vars][:retry][:http] = { :code => code, :message => error_message }
                 fail(RetryAttempt::new)
               end
             end

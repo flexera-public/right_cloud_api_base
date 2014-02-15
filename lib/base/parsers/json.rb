@@ -28,7 +28,7 @@ module RightScale
     module Parser
 
       class Json
-        def self.parse(text)
+        def self.parse(text, options = {})
           text && ::JSON::parse(text)
         end
       end

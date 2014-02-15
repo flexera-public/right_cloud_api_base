@@ -30,7 +30,14 @@ module RightScale
     #
     class ApiManager
 
-      DEFAULT_LOG_FILTERS = [:response_analyzer, :request_generator, :response_analyzer_body_error , :connection_proxy, :request_generator_body]
+      DEFAULT_LOG_FILTERS = [
+        :connection_proxy,
+        :request_generator,
+        :request_generator_body,
+        :response_analyzer,
+        :response_analyzer_body_error,
+        :response_parser,
+      ]
 
       class Error < CloudApi::Error
       end
@@ -196,8 +203,17 @@ module RightScale
                                :manager => self)
         # Main loop
         loop do
+          # Start a new stat session.
+          stat = {}
+          @data[:stat][:data] << stat
+          # Reset retry attempt flag.
           retry_attempt = false
+          # Loop through all the required routes.
           routines.each do |routine|
+            # Start a new stat record for current routine.
+            routine_name       = routine.class.name
+            stat[routine_name] = {}
+            stat[routine_name][:started_at] = Time.now.utc
             begin
               # Set routine data
               routine.reset(data)
@@ -223,6 +239,9 @@ module RightScale
               retry_attempt = true
               # Break the routines loop and exit into the main one.
               break
+            ensure
+              # Complete current stat session
+              stat[routine_name][:time_taken] = Time.now.utc - stat[routine_name][:started_at]
             end
           end
           # Make another attempt from the scratch or...
@@ -233,9 +252,16 @@ module RightScale
         # After_process_api_request_callback.
         invoke_callback_method(options[:after_process_api_request_callback], :manager => self)
         data[:result]
+      rescue => error
+        # Invoke :after error callback
+        invoke_callback_method(options[:after_error_callback], :manager => self, :error => error)
+        fail error
       ensure
         # Remove the unique-per-request log prefix.
         cloud_api_logger.reset_unique_prefix
+        # Complete stat data and invoke its callback.
+        @data[:stat][:time_taken] = Time.now.utc - @data[:stat][:started_at] if @data[:stat]
+        invoke_callback_method(options[:stat_data_callback], :manager => self, :stat => self.stat, :error => error)
       end
       private :process_api_request
 
@@ -270,11 +296,16 @@ module RightScale
         headers = (options[:headers] || {})._stringify_keys
         headers.merge!(@with_headers._stringify_keys)
         headers.merge!( opts[:headers] || {})._stringify_keys
+        # Make sure the endpoint's schema is valid.
+        parsed_endpoint = ::URI::parse(endpoint)
+        unless [nil, 'http', 'https'].include? parsed_endpoint.scheme
+          fail Error.new('Endpoint parse failed - invalid scheme')
+        end
         # Options: Build the initial data hash
         @data = {
           :options     => options.dup,
           :credentials => @credentials.dup,
-          :connection  => { :uri           => ::URI::parse(endpoint) },
+          :connection  => { :uri           => parsed_endpoint },
           :request     => { :verb          => verb.to_s.downcase.to_sym,
                             :relative_path => relative_path,
                             :headers       => HTTPHeaders::new(headers),
@@ -286,7 +317,11 @@ module RightScale
                                           :storage    => @storage,
                                           :block      => block }
                           },
-          :callbacks   => { }
+          :callbacks   => { },
+          :stat        => {
+            :started_at => Time::now.utc,
+            :data       => [ ],
+          },
         }
         options
       end
@@ -312,6 +347,67 @@ module RightScale
       #
       def cloud_api_logger
         @options[:cloud_api_logger]
+      end
+
+      # Returns current statistic.
+      #
+      # @return [Hash]
+      #
+      # @example
+      #   # Simple case:
+      #   amazon.DescribeVolumes #=> [...]
+      #   amazon.stat #=>
+      #     {:started_at=>2014-01-03 19:09:13 UTC,
+      #      :time_taken=>2.040465903,
+      #      :data=>
+      #       [{"RightScale::CloudApi::RetryManager"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>1.7136e-05},
+      #         "RightScale::CloudApi::RequestInitializer"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>7.405e-06},
+      #         "RightScale::CloudApi::AWS::RequestSigner"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>0.000140031},
+      #         "RightScale::CloudApi::RequestGenerator"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>4.7781e-05},
+      #         "RightScale::CloudApi::RequestAnalyzer"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>3.1789e-05},
+      #         "RightScale::CloudApi::ConnectionProxy"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>2.025818663},
+      #         "RightScale::CloudApi::ResponseAnalyzer"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>0.000116668},
+      #         "RightScale::CloudApi::CacheValidator"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>1.9225e-05},
+      #         "RightScale::CloudApi::ResponseParser"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>0.014059933},
+      #         "RightScale::CloudApi::ResultWrapper"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>4.4907e-05}}]}
+      #
+      # @example
+      #   # Using callback:
+      #   STAT_DATA_CALBACK = lambda do |args|
+      #     puts "Error: #{args[:error].class.name}" if args[:error]
+      #     pp   args[:stat]
+      #   end
+      #
+      #   amazon = RightScale::CloudApi::AWS::EC2::Manager::new(
+      #     ENV['AWS_ACCESS_KEY_ID'],
+      #     ENV['AWS_SECRET_ACCESS_KEY'],
+      #     endpoint || ENV['EC2_URL'],
+      #     :stat_data_callback => STAT_DATA_CALBACK)
+      #
+      #   amazon.DescribeVolumes #=> [...]
+      #
+      #     # >> Stat data callback's output <<:
+      #     {:started_at=>2014-01-03 19:09:13 UTC,
+      #      :time_taken=>2.040465903,
+      #      :data=>
+      #       [{"RightScale::CloudApi::RetryManager"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>1.7136e-05},
+      #          ...
+      #         "RightScale::CloudApi::ResultWrapper"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>4.4907e-05}}]}
+      #
+      def stat
+        @data && @data[:stat]
       end
 
       # Returns the last request object.

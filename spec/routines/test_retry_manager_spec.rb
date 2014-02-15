@@ -32,7 +32,13 @@ describe "" do
     @request = stub(:verb => 'get', :path => 'some/path', :body => 'body', :is_io? => false, :is_error? => false, :is_redirect? => false, :headers => {'header1' => 'val1', 'header2' => 'val2'})
     @test_data = {
       :options     => { :user_agent => 'user_agent_data',
-                        :cloud_api_logger => RightScale::CloudApi::CloudApiLogger.new({})},
+                        :cloud_api_logger => RightScale::CloudApi::CloudApiLogger.new({}),
+                        :retry => {
+                          :count            => 2,
+                          :reiteration_time => 10,
+                          :sleep_time       => 0.2
+                        },
+                      },
       :vars        => { :system => {:block => 'block', :started_at => Time.now}},
       :credentials => {},
       :callbacks   => {},
@@ -49,14 +55,30 @@ describe "" do
       @retrymanager.execute(@test_data)
       @test_data[:vars][:retry][:count] .should     == 0
       @test_data[:vars][:retry][:sleep_time].should == 0.2
+
       # 2nd run, +1 count *2 sleep
       @retrymanager.execute(@test_data)
       @test_data[:vars][:retry][:count].should == 1
       @test_data[:vars][:retry][:sleep_time].should == 0.4
+
       # 3rd run, +1 count, *2 sleep
       @retrymanager.execute(@test_data)
       @test_data[:vars][:retry][:count].should == 2
       @test_data[:vars][:retry][:sleep_time].should == 0.8
+
+      #4th run, case 1: default error
+      default_rm_error = "RetryManager: No more retries left."
+      lambda do
+        @retrymanager.execute(@test_data)
+      end.should raise_error(RightScale::CloudApi::RetryManager::Error, default_rm_error)
+
+      #4th run, case 2: cloud_error + default error
+      http_error  = 'Banana.'
+      expectation = "#{http_error}\n#{default_rm_error}"
+      @test_data[:vars][:retry][:http] = { :code => 777, :message => http_error }
+      lambda do
+        @retrymanager.execute(@test_data)
+      end.should raise_error(RightScale::CloudApi::RetryManager::Error, expectation)
     end
   end
 end
