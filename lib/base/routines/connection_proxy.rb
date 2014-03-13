@@ -43,14 +43,18 @@ module RightScale
           connection_proxy_class = data[:options][:connection_proxy]
           unless connection_proxy_class
             # If it is not defined then load right_http_connection gem and use it.
-            connection_proxy_class = ConnectionProxy::RightHttpConnectionProxy
+            # connection_proxy_class = ConnectionProxy::RightHttpConnectionProxy
+            connection_proxy_class = RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy
           end
           @connection_proxy = connection_proxy_class::new
         end        
         
         # Register a call back to close current connection
-        data[:callbacks][:close_current_connection] = Proc::new { |reason| @connection_proxy.close_connection(nil, reason);
-                                                                            cloud_api_logger.log("Current connection closed: #{reason}", :connection_proxy) }
+        data[:callbacks][:close_current_connection] = Proc::new do |reason|
+          @connection_proxy.close_connection(nil, reason)
+          cloud_api_logger.log("Current connection closed: #{reason}", :connection_proxy)
+        end
+
         # Make a request.
         with_timer('HTTP request', :connection_proxy) do
           @connection_proxy.request(data)

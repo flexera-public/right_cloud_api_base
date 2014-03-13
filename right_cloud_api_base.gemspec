@@ -39,7 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'json',                  '>= 1.0.0'
   spec.add_dependency 'ruby-hmac',             '>= 0.4.0'
   spec.add_dependency 'libxml-ruby',           '>= 1.0.0'
-  spec.add_dependency 'right_http_connection', '>= 1.3'
+#  spec.add_dependency 'right_http_connection', '>= 1.3'
   spec.add_dependency 'redcarpet'
 
   spec.add_development_dependency 'rspec',     '= 1.3.1'
