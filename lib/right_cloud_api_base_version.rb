@@ -21,13 +21,17 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
+# RightScale namespace
+#
+# @api public
+#
 module RightScale
+  # CloudApi gem namespace
   module CloudApi
+    # CloudApi gem version namespace
     module VERSION
-      MAJOR  = 0 unless defined? MAJOR
-      MINOR  = 1 unless defined? MINOR
-      TINY   = 0 unless defined? TINY
-      STRING = [MAJOR, MINOR, TINY].join('.') unless defined? STRING
+      # The gem version
+      STRING = '0.1.0'
     end
   end
 end

@@ -26,18 +26,47 @@ module RightScale
 
     # A Wrapper around standard Net::HTTPRequest class.
     #
+    # @api public
+    #
     # The class supports some handy methods for managing the verb, the body, the path and the headers.
     # And everythig else can be accessed through *raw* attribute that points to the original
     # Net::HTTPRequest instance.
     #
     class HTTPRequest < HTTPParent
+
+
+      # Request HTTP verb
+      #
+      # @return [String]
+      # @example
+      #   response.verb #=> 'get'
+      #
       attr_accessor :verb
+
+
+      # Request path
+      #
+      # @return [String]
+      # @example
+      #   response.path #=> 'xxx/yyy/zzz'
+      #
       attr_accessor :path
+
+
+      # Request HTTP params
+      #
+      # @return [Hash]
+      # @example
+      #   response.params #=> { 'a' => 'b', 'c' => 'd' }
+      #
       attr_accessor :params
 
+
+      # Max byte to log
       BODY_BYTES_TO_LOG = 6000
 
-      # The initializer.
+
+      # Constructor
       #
       # @param [String,Symbol] verb The current verb ('get', 'post', 'put', etc).
       # @param [String,IO,Nil] body The request body.
@@ -46,6 +75,9 @@ module RightScale
       # @param [Net::HTTPRequest] raw The original request (optional).
       #
       # @return [Rightscale::CloudApi::HTTPRequest] A new instance.
+      #
+      # @example
+      #   new('get', 'xxx/yyy/zzz', nil, {})
       #
       def initialize(verb, path, body, headers, raw=nil)
         # Create a request
@@ -56,21 +88,31 @@ module RightScale
         self.body = body
       end
 
-      # Sets a new headers value(s).
+
+      # Sets a new headers value(s)
       #
       # @param [String] header The header name.
       # @param [String, Array] value The value for the header.
+      # @return [void]
+      # @example
+      #   # no example
       #
       def []=(header, value)
         @headers[header] = value
       end
 
-      # Sets the current body and the 'content-length' header accordingly to the body size.
+
+      # Sets the body and the 'content-length' header
       #
       # If the body is blank it sets the header to 0.
       # If the body is a String it sets the header to the string size.
       # If the body is an IO object it tries to open it in *binmode* mode and sets the header to
       # the filesize (if the header is not set or points outside of the range of (0..filesize-1)).
+      #
+      # @param [Object] new_body
+      # @return [void]
+      # @example
+      #   # no example
       #
       def body=(new_body)
         # Set a request body
@@ -97,10 +139,10 @@ module RightScale
         end
       end
 
-      # Displays the request as a String with the verb and the path.
+
+      # Displays the request as a String with the verb and the path
       #
       # @return [String] The request verb and path info.
-      #
       # @example
       #   ec2.request.to_s #=>
       #    "GET /?AWSAccessKeyId=000..000A&Action=DescribeSecurityGroups&SignatureMethod=HmacSHA256&
@@ -111,9 +153,12 @@ module RightScale
         "#{verb.upcase} #{path}"
       end
 
-      # Displays the body information.
+
+      # Displays the body information
       #
       # @return [String] The body info.
+      # @example
+      #   request.body_info #=> "something"
       #
       def body_info
         if is_io?

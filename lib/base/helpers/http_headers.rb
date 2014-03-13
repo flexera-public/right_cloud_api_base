@@ -26,38 +26,50 @@ module RightScale
 
     # HTTP Headers container.
     #
+    # @api public
+    #
     # The class makes it so that the headers always point to an array or values. It is a wrapper
     # around Hash class where all the keys are always arrays.
     #
     class HTTPHeaders < BlankSlate
 
-      # Initializer.
+      # Initializer
       #
       # @param [Hash] headers A set of HTTP headers where keys are the headers names and the values
       # are the headers values.
+      #
+      # @example
+      #  # no example
       #
       def initialize(headers={})
         @headers = normalize(headers)
       end
 
-      # Element reference.
-      #
-      # Retrieves the given headers values by the header name.
+
+      # Retrieves the given headers values by the header name
       #
       # @param [String] header The header name.
-      #
       # @return [Array] The arrays of value(s).
+      #
+      # @example
+      #  request[:agent] #=> ['something']
       #
       def [](header)
         @headers[normalize_header(header)] || []
       end
 
-      # Element assignment.
-      #
-      # Sets the header.
+
+      # Sets a header
       #
       # @param [String]  header The header name.
       # @param [String,Array] value The new value(s).
+      # @return [void]
+      #
+      # @example
+      #  # Add a header
+      #  request[:agent] = 'something'
+      #  # Remove a header
+      #  request[:agent] = nil
       #
       def []=(header, value)
         value = normalize_value(value)
@@ -68,57 +80,82 @@ module RightScale
         end
       end
 
-      # Deletes the given header.
+
+      # Deletes the given header
       #
       # @param [String] header The header name.
+      # @return [void]
+      #
+      # @example
+      #  # Delete the header
+      #  request.delete(:agent)
       #
       def delete(header)
         @headers.delete(normalize_header(header))
       end
 
-      # Merges the new headers into the existent list.
+
+      # Merges the new headers into the existent list
       #
-      # @param [Array] headers The new headers.
+      # @param [Hash] headers The new headers.
       #
       # @return [Hash] A new hash containing the result.
+      #
+      # @example
+      #  # Delete the header
+      #  request.merge(:agent => 'foobar')
       #
       def merge(headers)
         @headers.merge(normalize(headers))
       end
 
-      # Merges the new headers into the current hash.
+
+      # Merges the new headers into the current hash
       #
-      # @param [Array] headers The new headers.
+      # @param [Hash] headers The new headers.
       #
       # @return [Hash] Updates the current object and returns the resulting hash.
+      #
+      # @example
+      #  # Delete the header
+      #  request.merge!(:agent => 'foobar')
       #
       def merge!(headers)
         @headers.merge!(normalize(headers))
       end
 
-      # Set the given header unless it is set.
+
+      # Set the given header unless it is set
       #
       # If the curent headers list already has any value for the given header the method does nothing.
       #
       # @param [String] header The header name.
       # @param [String,Array] value The values to initialize the header with.
+      # @return [void]
       #
+      # @example
+      #  request.set_if_blank(:agent, 'something')
       #
       def set_if_blank(header, value)
         self[header] = value if self[header].first._blank?
       end
 
-      # Returns a new Hash instance with all the current headers.
+
+      # Returns a new Hash instance with all the current headers
       #
       # @return [Hash] A new Hash with the headers.
+      #
+      # @example
+      #  request.to_hash #=> A hash with headers
       #
       def to_hash
         @headers.dup
       end
 
-      # Displays the headers in a nice way.
+
+      # Displays the headers in a nice way
       #
-      # @return [return] return_description
+      # @return [String] return_description
       #
       # @example
       #   ec2.response.headers.to_s #=>
@@ -128,40 +165,64 @@ module RightScale
         @headers.to_a.map { |header, value| "#{header}: #{(value.size == 1 ? value.first : value).inspect}" } * ', '
       end
 
-      # Feeds all the unknown methods to the undelaying hash object.
+
+      # Feeds all the unknown methods to the underlaying hash object
+      #
+      # @return [Object]
+      # @example
+      #  # no example
       #
       def method_missing(method_name, *args, &block)
         @headers.__send__(method_name, *args, &block)
       end
 
-      # Makes it so that a header is always a downcased String instance.
+
+      # Makes it so that a header is always a down cased String instance
+      #
+      # @api private
       #
       # @param [String,Symbol] header The header name.
-      #
       # @return [String] The normalized header name.
+      # @example
+      #   normalize_header(:Name) #=> 'name'
       #
       def normalize_header(header)
         header.to_s.downcase
       end
       private :normalize_header
 
-      # Wraps the given value(s) into Array.
+
+      # Wraps the given value(s) into Array
+      #
+      # @api private
       #
       # @param [Array] value The original values.
-      #
       # @return [String] The arrayified values or nil.
+      #
+      # @example
+      #   normalize_header(nil)        #=> nil
+      #   normalize_header('a')        #=> ['a']
+      #   normalize_header(['a', 'b']) #=> ['a', 'b']
       #
       def normalize_value(value)
         value.nil? ? nil : Utils::arrayify(value)
       end
       private :normalize_value
 
-      # The method normalizes the give hash and makes it so that all the keys are downcased
-      # String instances and all the values are Arrays.
+
+      # Normalizes the given headers
+      #
+      # @api private
+      #
+      # The method makes it so that all the keys are downcased String instances and all
+      # the values are Arrays.
       #
       # @param [Hash] headers A hash of headers.
       #
       # @return [Hash] Returns a new hash with normilized keys and values.
+      #
+      # @example
+      #  normalize(:Name => 'a') #=> {'name' => ['a']}
       #
       def normalize(headers)
         result = {}

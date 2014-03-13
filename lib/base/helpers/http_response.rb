@@ -24,19 +24,32 @@
 module RightScale
   module CloudApi
 
-    # A Wrapper around standard Net::HTTPRsponse class.
+    # A Wrapper around standard Net::HTTPRsponse class
+    #
+    # @api public
     #
     # The class supports some handy methods for managing the code, the body and the headers.
     # And everythig else can be accessed through *raw* attribute that points to the original
     # Net::HTTPResponse instance.
     #
     class HTTPResponse < HTTPParent
+
+      # The response code
+      #
+      # @return [String]
+      # @example
+      #   response.code #=> '404'
+      #
       attr_reader :code
 
-      BODY_BYTES_TO_LOG       = 2000
+      # Body bytes to log
+      BODY_BYTES_TO_LOG = 2000
+
+      # Body bytes to log in case of error
       BODY_BYTES_TO_LOG_ERROR = 6000
 
-      # The Initializer.
+
+      # Constructor
       #
       # @param [String] code The http response code.
       # @param [String,IO,Nil] body The response body.
@@ -45,6 +58,9 @@ module RightScale
       #
       # @return [Rightscale::CloudApi::HTTPResponse] A new response instance.
       #
+      # @example
+      #   new('200', 'body', {}, object)
+      #
       def initialize(code, body, headers, raw)
         @code    = code.to_s
         @body    = body
@@ -52,26 +68,32 @@ module RightScale
         @headers = HTTPHeaders::new(headers)
       end
 
-      # Returns true if the response code is in the range of 4xx or 5xx.
+
+      # Returns true if the response code is in the range of 4xx or 5xx
       #
       # @return [Boolean]
+      # @example
+      #   response.is_error? #=> false
       #
       def is_error?
         !!(code.is_a?(String) && code.match(/^(5..|4..)/))
       end
 
-      # Returns true if the response code is in the range of 3xx.
+
+      # Returns true if the response code is in the range of 3xx
       #
       # @return [Boolean]
+      # @example
+      #   response.is_redirect? #=> false
       #
       def is_redirect?
         !!(code.is_a?(String) && code.match(/^3..$/))
       end
 
-      # Returns the response code and code name.
+
+      # Returns the response code and code name
       #
       # @return [String]
-      #
       # @example
       #   ec2.response.to_s #=> '200 OK'
       #
@@ -81,9 +103,12 @@ module RightScale
         result
       end
 
-      # Displays the body information.
+
+      # Displays the body information
       #
       # @return [String] The body info.
+      # @example
+      #   ec2.response.body_info #=> 'response boby'
       #
       def body_info
         if    is_io?    then "#{body.class.name}"
