@@ -256,7 +256,7 @@ module RightScale
         # Load routines
         routine_classes = (Utils.inheritance_chain(self.class, :routines).select{|rc| !rc._blank?}.last || [])
         @routines       = routine_classes.map{ |routine_class| routine_class.new }
-        fail Error::new("Credentials must be set") if @credentials._blank?
+        # fail Error::new("Credentials must be set") if @credentials._blank?
         fail Error::new("Endpoint must be set")    if @endpoint._blank?
         # Try to wrap this manager with the handy API methods if possible using [:api_wrapper, :api_version, 'default']
         # (but do nothing if one explicitly passed :api_wrapper => nil )
