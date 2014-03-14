@@ -166,17 +166,21 @@ module RightScale
       #
       # @option options [String]  :connection_proxy
       #   Connection proxy class (when it need to be different from the default one).
-      #   Only RightScale::CloudApi::ConnectionProxy::RightHttpConnectionProxy and
-      #   RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy are supported
+      #   Only RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy (default) and
+      #   RightScale::CloudApi::ConnectionProxy::RightHttpConnectionProxy are supported.
+      #   The last one requires 'right_http_connection' gem to be manually installed, and it is
+      #   not recommended to use because it monkey patches Net::HTTP.
       #
       # @option options [Integer]  :connection_read_timeout
       #   Connection read timeout (in seconds).
       #
       # @option options [Integer]  :connection_retry_count
-      #   Max number of retries to when unable to establish a connection to API server.
+      #   Max number of retries to when unable to establish a connection to API server
+      #   (RightHttpConnectionProxy only).
       #
       # @option options [Integer]  :connection_retry_delay
-      #  Defines how long we wait on a low level connection error (in seconds).
+      #  Defines how long we wait on a low level connection error (in seconds)
+      #  (RightHttpConnectionProxy only).
       #
       # @option options [Hash]  :creds
       #   A set of optional extra creds a cloud may require

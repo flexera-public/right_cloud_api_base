@@ -49,7 +49,7 @@ module RightScale
           uri = @data[:connection][:uri]
           
           # Create a connection
-          connection = Net::HTTP::Persistent::new 'right_cloud_api_gem'
+          connection = Net::HTTP::Persistent::new('right_cloud_api_gem')
 
           # Create a real HTTP request
           fake = @data[:request][:instance]
@@ -63,27 +63,35 @@ module RightScale
           fake.raw = http_request
 
           # Register a callback to close current connection
-          @data[:callbacks][:close_current_connection] = Proc::new {|reason| connection.shutdown; log "Current connection closed: #{reason}" }
+          @data[:callbacks][:close_current_connection] = Proc::new do |reason|
+            connection.shutdown
+            log "Current connection closed: #{reason}"
+          end
           
           # Set all required options
-          http_request['user-agent'] ||= @data[:options][:connection_user_agent]   if @data[:options].has_key?(:connection_user_agent)
-          connection.ca_file           = @data[:options][:connection_ca_file]      if @data[:options].has_key?(:connection_ca_file)
-          connection.read_timeout      = @data[:options][:connection_read_timeout] if @data[:options].has_key?(:connection_read_timeout)
-          connection.open_timeout      = @data[:options][:connection_open_timeout] if @data[:options].has_key?(:connection_open_timeout)
-          connection.certificate       = @data[:credentials][:cert]                if @data[:credentials].has_key?(:cert)
-          connection.private_key       = @data[:credentials][:key]                 if @data[:credentials].has_key?(:key)
-  
-          # --- BEGIN HACK ---
-          # KD: Hack to deal with :abort_on_timeout option (override Net::HTTP::Persistent#can_retry? method)
-          connection.retry_change_requests = (data[:options].has_key?(:abort_on_timeout) && !@data[:options][:abort_on_timeout]) || true
+          # P.S. :connection_retry_count, :http_connection_retry_delay are not supported by this proxy
+          #
+          http_request['user-agent'] ||= @data[:options][:connection_user_agent] if @data[:options].has_key?(:connection_user_agent)
+          connection.ca_file      = @data[:options][:connection_ca_file]         if @data[:options].has_key?(:connection_ca_file)
+          connection.read_timeout = @data[:options][:connection_read_timeout]    if @data[:options].has_key?(:connection_read_timeout)
+          connection.open_timeout = @data[:options][:connection_open_timeout]    if @data[:options].has_key?(:connection_open_timeout)
+          connection.cert         = OpenSSL::X509::Certificate.new(@data[:credentials][:cert]) if @data[:credentials].has_key?(:cert)
+          connection.key          = OpenSSL::PKey::RSA.new(@data[:credentials][:key])          if @data[:credentials].has_key?(:key)
+          connection.retry_change_requests = !@data[:options][:abort_on_timeout]
 
-          # We need a way to tell to Net::HTTP::Persistent that we wanna make one extra retry attempt
-          # even when Net::HTTP::Persistent does not think so. On eof the solutions is to set
-          # Net::HTTP::Persistent#retry_change_requests to true and owerride Net::HTTP::Persistentcan_retry?
-          # so that is returns Net::HTTP::Persistent#retry_change_requests.
+          # --- BEGIN HACK ---
+          # KD: Hack to deal with :abort_on_timeout option
+          #
+          # We need a way to tell to Net::HTTP::Persistent that we want make one extra retry attempt
+          # even when Net::HTTP::Persistent does not think so.
+          #
+          # Net::HTTP::Persistent believes that it can retry on any GET call what is not true for
+          # Query like API clouds (Amazon, CloudStack, Euca, etc).
+          # The solutions is to monkeypatch  Net::HTTP::Persistent#can_retry? so that is returns
+          # Net::HTTP::Persistent#retry_change_requests.
           #
           # P.S. Net::HTTP::Persisten supports only 1 retry
-          def connection.can_retry?(req)
+          def connection.can_retry?(req, retried_on_ruby_2=false)
             retry_change_requests
           end
           # --- END HACK ---
@@ -91,59 +99,35 @@ module RightScale
           log "HttpConnection request: #{connection.inspect}"
 
           # Make a request:
-          block = @data[:vars][:system][:block]
-          if block
-            # If block is given - pass there all the chunks of a response and stop
-            # (dont do any parsing, analysing etc)
-            # 
-            # TRB 9/17/07 Careful - because we are passing in blocks, we get a situation where
-            # an exception may get thrown in the block body (which is high-level
-            # code either here or in the application) but gets caught in the
-            # low-level code of HttpConnection.  The solution is not to let any
-            # exception escape the block that we pass to HttpConnection::request.
-            # Exceptions can originate from code directly in the block, or from user
-            # code called in the other block which is passed to response.read_body.
-            # 
-            # TODO: the suggested fix for RightHttpConnection if to catch 
-            # Interrupt and SystemCallError instead of Exception in line 402
-            response = nil
-            begin
-              block_exception = nil
-              # Response.body will be a Net::ReadAdapter instance here - it cant be read as a string.
+          begin
+            # If block is given - pass there all the chunks of a response and then stop
+            # (don't do any parsing, analysis, etc)
+            block = @data[:vars][:system][:block]
+            if block
+              # Response.body is a Net::ReadAdapter instance - it can't be read as a string.
               # WEB: On its own, Net::HTTP causes response.body to be a Net::ReadAdapter when you make a request with a block 
               # that calls read_body on the response.
-              response = connection.request(uri, http_request) do |res|
-                begin
-                  # Update temp response
-                  @data[:response][:instance] = HTTPResponse::new( res.code,
-                                                                   nil,
-                                                                   res.to_hash,
-                                                                   res )
-                  res.read_body(&block) if res.is_a?(Net::HTTPSuccess)
-                rescue Exception => e
-                  block_exception = e
-                  break
-                end
+              connection.request(uri, http_request) do |response|
+                # Update temporary response
+                @data[:response][:instance] = HTTPResponse::new( response.code,
+                                                                 nil,
+                                                                 response.to_hash,
+                                                                 response )
+                response.read_body(&block)
               end
-              raise block_exception if block_exception
-            rescue Exception => e
-              connection.shutdown
-              raise ConnectionError::new e.message
-            end
-          else
-            # Things are simple if there is no any block
-            begin
+            else
+              # Things are simple if there is no any block
               response = connection.request(uri, http_request)
-            rescue Exception => e
-              connection.shutdown
-              raise ConnectionError::new e.message
+              @data[:response][:instance] = HTTPResponse::new( response.code,
+                                                               response.body,
+                                                               response.to_hash,
+                                                               response )
             end
+          rescue => e
+            connection.shutdown
+            raise ConnectionError::new e.message
           end
 
-          @data[:response][:instance] = HTTPResponse::new( response.code,
-                                                           response.body,
-                                                           response.to_hash,
-                                                           response )
         end
       end 
     end
