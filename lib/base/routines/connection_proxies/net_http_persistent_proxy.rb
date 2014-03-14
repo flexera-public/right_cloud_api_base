@@ -91,7 +91,7 @@ module RightScale
           # Net::HTTP::Persistent#retry_change_requests.
           #
           # P.S. Net::HTTP::Persisten supports only 1 retry
-          def connection.can_retry?(req, retried_on_ruby_2=false)
+          def connection.can_retry?(*args)
             retry_change_requests
           end
           # --- END HACK ---
