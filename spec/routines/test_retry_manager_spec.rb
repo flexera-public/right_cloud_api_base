@@ -28,8 +28,8 @@ describe "" do
     logger = Logger.new(STDOUT)
     logger.level = Logger::INFO
     @retrymanager = RightScale::CloudApi::RetryManager.new
-    @retrymanager.stub(:log => nil)
-    @request = stub(:verb => 'get', :path => 'some/path', :body => 'body', :is_io? => false, :is_error? => false, :is_redirect? => false, :headers => {'header1' => 'val1', 'header2' => 'val2'})
+    allow(@retrymanager).to receive(:log)
+    @request = double(:verb => 'get', :path => 'some/path', :body => 'body', :is_io? => false, :is_error? => false, :is_redirect? => false, :headers => {'header1' => 'val1', 'header2' => 'val2'})
     @test_data = {
       :options     => { :user_agent => 'user_agent_data',
                         :cloud_api_logger => RightScale::CloudApi::CloudApiLogger.new({}),
@@ -42,11 +42,11 @@ describe "" do
       :vars        => { :system => {:block => 'block', :started_at => Time.now}},
       :credentials => {},
       :callbacks   => {},
-      :connection  => {:uri => stub(:host => 'host.com', :port => '777', :scheme => 'scheme')},
+      :connection  => {:uri => double(:host => 'host.com', :port => '777', :scheme => 'scheme')},
       :request     => {:instance => @request}
     }
-    @response   = stub(:code => '200', :body => 'body', :to_hash => {:code => '200', :body => 'body'})
-    @connection = stub(:request => @response)
+    @response   = double(:code => '200', :body => 'body', :to_hash => {:code => '200', :body => 'body'})
+    @connection = double(:request => @response)
   end
 
   context "RightScale::CloudApi::RetryManager" do

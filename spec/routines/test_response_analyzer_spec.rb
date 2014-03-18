@@ -34,10 +34,10 @@ describe "RightScale::CloudApi::ResponseAnalyzer" do
     @test_data[:options] = {:error_patterns => [], :cloud_api_logger => RightScale::CloudApi::CloudApiLogger.new(
         {:logger => logger, :log_filters => [:response_analyzer, :response_analyzer_body_error]})
     }
-    @close_current_connection_callback = stub
+    @close_current_connection_callback = double
     @test_data[:callbacks] = {:close_current_connection => @close_current_connection_callback}
     @test_data[:connection] = {}
-    @responseanalyzer.stub(:log => nil)
+    allow(@responseanalyzer).to receive(:log)
   end
 
   context "with no error patterns" do
@@ -61,7 +61,7 @@ describe "RightScale::CloudApi::ResponseAnalyzer" do
     before(:each) do
       error_patterns = [{:action => :retry}]
       @test_data[:options][:error_patterns] = error_patterns
-      RightScale::CloudApi::Utils.stub(:pattern_matches? => true)
+      allow(RightScale::CloudApi::Utils).to receive(:pattern_matches?).and_return(true)
     end
     it "raises a retry attempt exception for 4xx and 5xx errors" do
       [500, 400].each do |http_error|
@@ -82,7 +82,7 @@ describe "RightScale::CloudApi::ResponseAnalyzer" do
     it "raises a retry attempt exception when there is a location (in body) for 3xx redirect" do
       response = generate_http_response(301, '<Endpoint> www.some-new-location.com </Endpoint>', {'location' => ''})
       @test_data[:response] = {:instance => response}
-      uri_object = stub(:host= => 'www.some-new-location.com', :to_s => 'www.some-new-location.com')
+      uri_object = double(:host= => 'www.some-new-location.com', :to_s => 'www.some-new-location.com')
       @test_data[:connection][:uri] = uri_object
       lambda { @responseanalyzer.execute(@test_data) }.should raise_error(RightScale::CloudApi::RetryAttempt)
     end

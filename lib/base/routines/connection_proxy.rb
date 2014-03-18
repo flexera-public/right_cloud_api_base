@@ -46,7 +46,7 @@ module RightScale
             # connection_proxy_class = ConnectionProxy::RightHttpConnectionProxy
             connection_proxy_class = RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy
           end
-          @connection_proxy = connection_proxy_class::new
+          @connection_proxy = connection_proxy_class.new
         end        
         
         # Register a call back to close current connection
