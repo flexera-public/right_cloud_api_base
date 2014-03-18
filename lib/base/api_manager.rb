@@ -176,11 +176,9 @@ module RightScale
       #
       # @option options [Integer]  :connection_retry_count
       #   Max number of retries to when unable to establish a connection to API server
-      #   (RightHttpConnectionProxy only).
       #
       # @option options [Integer]  :connection_retry_delay
       #  Defines how long we wait on a low level connection error (in seconds)
-      #  (RightHttpConnectionProxy only).
       #
       # @option options [Hash]  :creds
       #   A set of optional extra creds a cloud may require
@@ -306,7 +304,7 @@ module RightScale
       #
       def process_api_request(verb, relative_path, opts={}, &block)
         # Add a unique-per-request log prefix to every logged line.
-        cloud_api_logger.add_unique_prefix
+        cloud_api_logger.set_unique_prefix
         # Initialize @data variable and get a final set of API request options.
         options = initialize_api_request_options(verb, relative_path, opts, &block)
         # Before_process_api_request_callback.

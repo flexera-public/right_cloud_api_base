@@ -39,11 +39,11 @@ module RightScale
       
       # Retries manager.
       # 
-      # The manager usually takes the very first position in routins chain.
+      # The manager usually takes the very first position in routines chain.
       # It just increments its counters if we did not reach a possible count of retries or
       # complains if there are no attempts left or if API request time is over.
       #
-      # There are 2 possible resons for a retry to be performed:
+      # There are 2 possible reasons for a retry to be performed:
       #  1. There was a redirect request (HTTP 3xx code)
       #  2. There was an error (HTTP 5xx, 4xx) and
       #

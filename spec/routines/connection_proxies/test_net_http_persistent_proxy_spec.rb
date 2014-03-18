@@ -21,19 +21,21 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #++
 
-require File.expand_path(File.dirname(__FILE__)) + "/../spec_helper"
+require File.expand_path(File.dirname(__FILE__)) + "/../../spec_helper"
+require "net/http/persistent"
 
-describe "RightScale::CloudApi::ConnectionProxy::RightHttpConnectionProxy" do
+describe "RightScale::CloudApi::ConnectionProxy::NetHTTPPersistentProxy" do
   before(:each) do
     logger = Logger.new(STDOUT)
     logger.level = Logger::INFO
-    @righthttpconnectionproxy = RightScale::CloudApi::ConnectionProxy::RightHttpConnectionProxy.new
+    @proxy = RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy.new
     @uri = stub(:host   => 'host.com',
                 :port   => '777',
                 :scheme => 'scheme')
     @uri.stub(:dup => @uri)
     @test_data = {
       :options     => {:user_agent => 'user_agent_data',
+                       :connection_retry_count => 0,
                        :cloud_api_logger => RightScale::CloudApi::CloudApiLogger.new({:logger => logger})},
       :credentials => {},
       :callbacks   => {},
@@ -47,20 +49,33 @@ describe "RightScale::CloudApi::ConnectionProxy::RightHttpConnectionProxy" do
                                          :raw=     => nil)},
       :connection  => {:uri => @uri}
     }
-    @righthttpconnectionproxy.stub(:log => nil)
     @response   = stub(:code => '200', :body => 'body', :to_hash => {:code => '200', :body => 'body'})
-    @connection = stub(:request => @response)
   end
 
-  it "works" do
-    # should run through without any exceptions
-    @righthttpconnectionproxy.should_receive(:current_connection).and_return(@connection)
-    @righthttpconnectionproxy.request(@test_data)
+  context "when request succeeds" do
+    before :each do
+      @connection = stub(
+        :request                => @response,
+        :retry_change_requests= => true )
+      Net::HTTP::Persistent.should_receive(:new).and_return(@connection)
+    end
 
-    # failure in the connection should finish and reraise the error
-    @connection.should_receive(:finish)
-    @connection.should_receive(:request ).and_raise(Exception.new("something really bad happened with your request"))
-    @righthttpconnectionproxy.should_receive(:current_connection).and_return(@connection)
-    lambda { @righthttpconnectionproxy.request(@test_data) }.should raise_error(Exception)
+    it "works" do
+      @proxy.request(@test_data)
+    end
+  end
+
+  context "when there is a connection issue" do
+    before :each do
+      @connection = stub( :retry_change_requests= => true )
+      Net::HTTP::Persistent.should_receive(:new).and_return(@connection)
+      # failure in the connection should finish and reraise the error
+      @connection.should_receive(:request).and_raise(StandardError.new("Banana"))
+      @connection.should_receive(:shutdown)
+    end
+
+    it "works" do
+      lambda { @proxy.request(@test_data) }.should raise_error(Exception)
+    end
   end
 end

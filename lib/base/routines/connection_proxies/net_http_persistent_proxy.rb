@@ -29,8 +29,16 @@ module RightScale
         class Error < CloudApi::Error
         end
 
+
+        # Known timeout errors
+        TIMEOUT_ERRORS = /Timeout|ETIMEDOUT/
+
+        # Other re-triable errors
+        OTHER_ERRORS   = /SocketError|EOFError/
+
+
         def log(message)
-          @data[:options][:cloud_api_logger].log(message, :net_http_persistent_proxy)
+          @data[:options][:cloud_api_logger].log(message, :connection_proxy, :warn)
         end
         
         # Performs an HTTP request.
@@ -49,9 +57,9 @@ module RightScale
           uri = @data[:connection][:uri]
           
           # Create a connection
-          connection = Net::HTTP::Persistent::new('right_cloud_api_gem')
+          connection = Net::HTTP::Persistent.new('right_cloud_api_gem')
 
-          # Create a real HTTP request
+          # Create a fake HTTP request
           fake = @data[:request][:instance]
           http_request = "Net::HTTP::#{fake.verb._camelize}"._constantize::new(fake.path)
           if fake.is_io?
@@ -77,58 +85,109 @@ module RightScale
           connection.open_timeout = @data[:options][:connection_open_timeout]    if @data[:options].has_key?(:connection_open_timeout)
           connection.cert         = OpenSSL::X509::Certificate.new(@data[:credentials][:cert]) if @data[:credentials].has_key?(:cert)
           connection.key          = OpenSSL::PKey::RSA.new(@data[:credentials][:key])          if @data[:credentials].has_key?(:key)
-          connection.retry_change_requests = !@data[:options][:abort_on_timeout]
 
-          # --- BEGIN HACK ---
-          # KD: Hack to deal with :abort_on_timeout option
-          #
-          # We need a way to tell to Net::HTTP::Persistent that we want make one extra retry attempt
-          # even when Net::HTTP::Persistent does not think so.
-          #
-          # Net::HTTP::Persistent believes that it can retry on any GET call what is not true for
-          # Query like API clouds (Amazon, CloudStack, Euca, etc).
-          # The solutions is to monkeypatch  Net::HTTP::Persistent#can_retry? so that is returns
-          # Net::HTTP::Persistent#retry_change_requests.
-          #
-          # P.S. Net::HTTP::Persisten supports only 1 retry
-          def connection.can_retry?(*args)
-            retry_change_requests
-          end
-          # --- END HACK ---
-
-          log "HttpConnection request: #{connection.inspect}"
-
-          # Make a request:
+          # Make a request
           begin
-            # If block is given - pass there all the chunks of a response and then stop
-            # (don't do any parsing, analysis, etc)
-            block = @data[:vars][:system][:block]
+            make_request_with_retries(connection, uri, http_request)
+          rescue => e
+            connection.shutdown
+            fail(ConnectionError, e.message)
+          end
+        end
+
+
+        # Makes request with low level retries.
+        #
+        # Net::HTTP::Persistent does not fully support retries logic that we used to have.
+        # To deal with this we disable Net::HTTP::Persistent's retries and handle them in our code.
+        #
+        # @param [Net::HTTP::Persistent] connection
+        # @param [URI] uri
+        # @param [Net::HTTPRequest] http_request
+        #
+        # @return [void]
+        #
+        def make_request_with_retries(connection, uri, http_request)
+          disable_net_http_persistent_retries(connection)
+          # Initialize retry vars:
+          connection_retry_count = @data[:options][:connection_retry_count] || 3
+          connection_retry_delay = @data[:options][:connection_retry_delay] || 0.5
+          retries_performed      = 0
+          # If block is given - pass there all the chunks of a response and then stop
+          # (don't do any parsing, analysis, etc)
+          block = @data[:vars][:system][:block]
+          begin
             if block
               # Response.body is a Net::ReadAdapter instance - it can't be read as a string.
-              # WEB: On its own, Net::HTTP causes response.body to be a Net::ReadAdapter when you make a request with a block 
+              # WEB: On its own, Net::HTTP causes response.body to be a Net::ReadAdapter when you make a request with a block
               # that calls read_body on the response.
               connection.request(uri, http_request) do |response|
-                # Update temporary response
-                @data[:response][:instance] = HTTPResponse::new( response.code,
-                                                                 nil,
-                                                                 response.to_hash,
-                                                                 response )
+                # If we are at the point when we have started reading from the remote end
+                # then there is no low level retry is allowed. Otherwise we would need to reset the
+                # IO pointer, etc.
+                connection_retry_count = 0
+                # Set IO response
+                set_http_response(response)
                 response.read_body(&block)
               end
             else
-              # Things are simple if there is no any block
+              # Set text response
               response = connection.request(uri, http_request)
-              @data[:response][:instance] = HTTPResponse::new( response.code,
-                                                               response.body,
-                                                               response.to_hash,
-                                                               response )
+              set_http_response(response)
             end
+            nil
           rescue => e
-            connection.shutdown
-            raise ConnectionError::new e.message
+            # Fail if it is an unknown error
+            fail(e) if !(e.message[TIMEOUT_ERRORS] || e.message[OTHER_ERRORS])
+            # Fail if it is a Timeout and timeouts are banned
+            fail(e) if e.message[TIMEOUT_ERRORS] && !!@data[:options][:abort_on_timeout]
+            # Fail if there are no retries left...
+            fail(e) if (connection_retry_count -= 1) < 0
+            # ... otherwise sleep a bit and retry.
+            retries_performed += 1
+            log("#{self.class.name}: Performing retry ##{retries_performed} caused by: #{e.class.name}: #{e.message}")
+            sleep(connection_retry_delay) unless connection_retry_delay._blank?
+            connection_retry_delay *= 2
+            retry
           end
-
         end
+
+
+        # Saves HTTP Response into data hash.
+        #
+        # @param [Net::HTTPResponse] response
+        #
+        # @return [void]
+        #
+        def set_http_response(response)
+          @data[:response][:instance] = HTTPResponse.new(
+            response.code,
+            response.body.is_a?(IO) ? nil : response.body,
+            response.to_hash,
+            response
+          )
+          nil
+        end
+
+
+        # Net::HTTP::Persistent believes that it can retry on any GET call what is not true for
+        # Query like API clouds (Amazon, CloudStack, Euca, etc).
+        # The solutions is to monkeypatch  Net::HTTP::Persistent#can_retry? so that is returns
+        # Net::HTTP::Persistent#retry_change_requests.
+        #
+        # @param [Net::HTTP::Persistent] connection
+        #
+        # @return [void]
+        #
+        def disable_net_http_persistent_retries(connection)
+          connection.retry_change_requests = false
+          # Monkey patch this connection instance only.
+          def connection.can_retry?(*args)
+            false
+          end
+          nil
+        end
+
       end 
     end
   end

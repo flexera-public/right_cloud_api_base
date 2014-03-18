@@ -136,7 +136,6 @@ module RightScale
           :response_analyzer_body_error => "Enables ResponseAnalyzer body logging on error",
           :timer                        => "Enables timer logs",
           :retry_manager                => "Enables RetryManager logs",
-          :right_http_connection_proxy  => "Enables RightHttpConnectionProxy logs",
           :connection_proxy             => "Enables ConnectionProxy logs",
           :all                          => "Enables all the possible log topics"
         }
@@ -169,7 +168,7 @@ module RightScale
       # @example
       #  # no example
       #
-      def add_unique_prefix
+      def set_unique_prefix
         @unique_prefix = RightScale::CloudApi::Utils::random(6)
       end
 
@@ -181,7 +180,7 @@ module RightScale
       #  # no example
       #
       def reset_unique_prefix
-        @request_log_tag = nil
+        @unique_prefix = nil
       end
 
 
@@ -192,7 +191,7 @@ module RightScale
       #  # no example
       #
       def request_log_tag
-        @request_log_tag._blank? ? "" : "[#{@request_log_tag}] "
+        @unique_prefix._blank? ? "" : "[#{@unique_prefix}] "
       end
 
 

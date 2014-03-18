@@ -160,7 +160,7 @@ module RightScale
         end
         
         def log(message)     
-          @data[:options][:cloud_api_logger].log(message, :right_http_connection_proxy)
+          @data[:options][:cloud_api_logger].log(message, :connection_proxy)
         end
         
         #----------------------------
