@@ -24,6 +24,7 @@
 module RightScale
   module CloudApi
 
+    # Standard error
     class Error < StandardError
     end
 
@@ -39,6 +40,7 @@ module RightScale
     class ConnectionError < CloudError
     end
 
+    # HTTP Error
     class HttpError < CloudError
       attr_reader :code
 
@@ -48,9 +50,11 @@ module RightScale
       end
     end
 
+    # Missing Query API pattern Error
     class PatternNotFoundError < Error
     end
 
+    # Retry Attempt exception
     class RetryAttempt < Error # :nodoc:
     end
 
@@ -78,6 +82,8 @@ module RightScale
     #  # The call below creates an instance of RightScale::CloudApi::YourCoolCloudNamespace::ApiManager in the
     #  # current thread and invokes "ListMyCoolResources" method on it.
     #  my_cloud.ListMyCoolResources #=> cloud response
+    #
+    # @see ApiManager
     #
     class Manager
 

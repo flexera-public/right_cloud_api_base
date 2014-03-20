@@ -26,40 +26,76 @@ module RightScale
 
     # The parent class for HTTPRequest and HTTPResponse.
     #
+    # @api public
+    #
     # The class defines generic methods that are used by both Request and Response classes.
     #
     class HTTPParent
+
+      # Returns Net::HTTPResponse object
+      #
+      # @return [Net::HTTPResponse]
+      # @example
+      #   # no example
+      #
       attr_accessor :raw
+
+
+      # Returns the response body
+      #
+      # @return [String,nil]
+      # @example
+      #   # no example
+      #
       attr_accessor :body
+
+
+      # Returns the response headers
+      #
+      # @return [Hash]
+      # @example
+      #   # no example
+      #
       attr_reader   :headers
 
-      # Returns all the headers for the current request/response instance.
+
+      # Returns all the headers for the current request/response instance
       #
       # @return [Hash] The set of headers.
+      # @example
+      #   # no example
       #
       def headers
         @headers.to_hash
       end
 
-      # Retrieves the given header values.
+
+      # Retrieves the given header values
       #
       # @param [Hash] header The header name.
-      #
       # @return [Array] The Array of values for the header.
+      #
+      # @example
+      #   # no example
       #
       def [](header)
         @headers[header]
       end
 
-      # Returns true if the current object's body is an IO instance.
+
+      # Returns true if the current object's body is an IO instance
       #
       # @return [Boolean] True if it is an IO and false otherwise.
+      #
+      # @example
+      #   is_io? #=> false
       #
       def is_io?
         body.is_a?(IO) || body.is_a?(Net::ReadAdapter)
       end
 
-      # Displays the current headers in a nice way.
+
+      # Displays the current headers in a nice way
       #
       # @return [String]
       #

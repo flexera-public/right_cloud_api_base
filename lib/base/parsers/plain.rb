@@ -26,7 +26,7 @@ module RightScale
     module Parser
 
       class Plain
-        def self.parse(text)
+        def self.parse(text, options = {})
           text
         end
       end

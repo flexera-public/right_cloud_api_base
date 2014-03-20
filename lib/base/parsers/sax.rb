@@ -29,18 +29,26 @@ module RightScale
       
       class Sax
         
-        def self.parse(text)
+        def self.parse(text, options = {})
           # Parse the xml text
           # http://libxml.rubyforge.org/rdoc/
-          xml           = ::XML::SaxParser::string(text)
-          xml.callbacks = new
+ 
+          xml = if options[:encoding] == "UTF-8"
+                  xml_context = ::XML::Parser::Context.string(text)
+                  xml_context.encoding = ::XML::Encoding::UTF_8
+                  ::XML::SaxParser.new(xml_context)
+                else
+                  ::XML::SaxParser::string(text)
+                end
+          xml.callbacks = new(options)
           xml.parse
           xml.callbacks.result
         end
 
-        def initialize
+        def initialize(options = {})
           @tag  = {}
           @path = []
+          @options = options
         end
 
         def result
@@ -84,7 +92,14 @@ module RightScale
           # Ignore lines that contains white spaces only
           return if chars[/\A\s*\z/m]
           # Put Text
+          if  @options[:encoding] == "UTF-8"
+            # setting the encoding in context doesn't work(open issue with libxml-ruby).
+            # force encode as a work around.
+            # TODO remove the force encoding when issue in libxml is fixed
+            chars = chars.force_encoding("UTF-8") if chars.respond_to?(:force_encoding)
+          end
           (@tag['@@text'] ||= '') << chars
+          chars
         end
 
         def on_comment(msg)

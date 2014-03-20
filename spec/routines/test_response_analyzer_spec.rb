@@ -30,6 +30,7 @@ describe "RightScale::CloudApi::ResponseAnalyzer" do
     @responseanalyzer = RightScale::CloudApi::ResponseAnalyzer.new
     @test_data = {}
     @test_data[:request] = { :verb => 'some_verb', :orig_params => {}, :instance => 'some_request'}
+    @test_data[:vars]    = { :retry => {} }
     @test_data[:options] = {:error_patterns => [], :cloud_api_logger => RightScale::CloudApi::CloudApiLogger.new(
         {:logger => logger, :log_filters => [:response_analyzer, :response_analyzer_body_error]})
     }

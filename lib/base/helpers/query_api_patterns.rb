@@ -23,14 +23,28 @@
 
 module RightScale
   module CloudApi
+
+    # Mixins namespace
+    #
+    # @api public
+    #
     module Mixin
+
+      # Query API namespace
       module QueryApiPatterns
         
+        # Standard included
+        #
+        # @return [void]
+        # @example
+        #   # no example
+        #
         def self.included(base)
           base.extend(ClassMethods)
         end
 
-        # Query API patterns help one to simulate the Query API type through the REST API.
+
+        # Query API patterns help one to simulate the Query API type through the REST API
         #
         # When the REST API is powerfull enough it is not easy to code it becaue one have to worry
         # about the path, the URL parameters, the headers and the body, when in the QUERY API
@@ -119,15 +133,19 @@ module RightScale
         #                      'bar_param'         => 'bar' )
         #
         module ClassMethods
-          # The method returns a list of pattternd defined in the current class.
+
+          # The method returns a list of pattternd defined in the current class
           #
           # @return [Array] The arrays of patterns.
+          # @example
+          #   # no example
           #
           def query_api_patterns
             @query_api_patterns ||= {}
           end
 
-          # Defines a new method patern.
+
+          # Defines a new query pattern
           #
           # @param [String] method_name The name of the new QUERY-like method;
           # @param [String] verb        The HTTP verb.
@@ -142,6 +160,10 @@ module RightScale
           # @option opts [Hash] :options A set of extra options.
           #
           # TODO: :explain options, callbacks, etc
+          #
+          # @return [void]
+          # @example
+          #   # no example
           #
           def query_api_pattern(method_name, verb, path='', opts={}, storage=nil, &block)
             opts        = opts.dup
@@ -170,7 +192,8 @@ module RightScale
           end
         end
 
-        # Returns the list of current patterns.
+
+        # Returns the list of current patterns
         #
         # The patterns can be defined at the class levels or/and in special Wrapper modules.
         # The patterns defined at the class levels are always inherited by the instances of this
@@ -180,6 +203,8 @@ module RightScale
         # at the level of wrappers.
         #
         # @return [Array] The has of QUERY-like method patterns.
+        # @example
+        #   # no example
         #
         # P.S. The method is usually called in Wrapper modules (see S3 default wrapper)
         #
@@ -189,10 +214,13 @@ module RightScale
           self.class.query_api_patterns.merge(@query_api_patterns)
         end
 
-        # Explains the given pattern by name.
+
+        # Explains the given pattern by name
+        #
         # (Displays the pattern definition)
         #
         # @param [String] pattern_name The pattern method name.
+        # @return [Stringq]
         #
         # @example
         #   puts open_stack.explain_query_api_pattern('AttachVolume') #=>
@@ -213,14 +241,24 @@ module RightScale
           end
           result
         end
-        
-        # Set object specific QUERY-like pattern.
+
+
+        # Set object specific QUERY-like pattern
+        #
         # This guy is usually called from Wrapper's module from self.extended method (see S3 default wrapper)
+        #
+        # @return [void]
+        # @example
+        #   # no example
+        #
         def query_api_pattern(method_name, verb, path='', opts={}, &block)
           self.class.query_api_pattern(method_name, verb, path, opts, @query_api_patterns, &block)
         end
 
-        # Build request based on the given set of variables and QUERY-like api pattern.
+
+        # Build request based on the given set of variables and QUERY-like api pattern
+        #
+        # @api private
         #
         # @param [String] query_pattern_name The QUERY-like pattern name.
         # @param [param_type] query_params A set of options.
@@ -229,6 +267,8 @@ module RightScale
         # @yieldreturn [block_return_type] block_return_description
         #
         # @return [return] return_description
+        # @example
+        #   # no example
         #
         # @raise [error] raise_description
         #
@@ -261,8 +301,15 @@ module RightScale
         end
         private :compute_query_api_pattern_based_params
 
-        # Execute pattered method if it exists.
-        # Otherwise raises PatternNotFoundError exception
+
+        # Execute pattered method if it exists
+        #
+        # @raise [PatternNotFoundError]
+        #
+        # @return [Object]
+        # @example
+        #   # no example
+        #
         def invoke_query_api_pattern_method(method_name, *args, &block)
           computed_data = compute_query_api_pattern_based_params(method_name, args.first)
           # Make an API call:
@@ -273,11 +320,16 @@ module RightScale
                    &block)
         end
 
-        # Create custom method_missing method.
+
+        # Create custom method_missing method
         #
         # If the called method is not explicitly defined then it tries to find the method definition
         # in the QUERY-like patterns. And if the method is there it builds a request based on the
         # pattern definition.
+        #
+        # @return [Object]
+        # @example
+        #   # no example
         #
         def method_missing(method_name, *args, &block)
           begin
@@ -286,15 +338,25 @@ module RightScale
             super
           end
         end
-        
+
+
         FIND_KEY_REGEXP           = /\{:([a-zA-Z0-9_]+)\}/
         FIND_COLLECTION_1_REGEXP  = /\[\{:([a-zA-Z0-9_]+)\}\]/
         FIND_COLLECTION_2_REGEXP  = /^([^\[]+)\[\]/
         FIND_REPLACEMENT_REGEXP   = /\{:([a-zA-Z0-9_]+)\}(?!\])/
         FIND_BLANK_KEYS_TO_REMOVE = /\{!remove-if-blank\}/
 
-        # Computes a hash of parameters (:params, :options, :body, :headers, etc) that will
+
+        # Prepares patters params
+        #
+        # @api private
+        #
+        # Returns a hash of parameters (:params, :options, :body, :headers, etc) that will
         # used for making an API request.
+        #
+        # @return [Hash]
+        # @example
+        #   # no example
         #
         def compute_query_api_pattern_request_data(method_name, pattern, opts={}) # :nodoc:
           container           = opts.dup
@@ -334,39 +396,54 @@ module RightScale
         end
         private :compute_query_api_pattern_request_data
 
-        # Computes the path for the API request.
+
+        # Computes the path for the API request
+        #
+        # @api private
         #
         # @param [String] query_api_method_name Auery API like pattern name.
         # @param [Hash] container The container for final parameters.
         # @param [Hash] used_query_params The list of used variables.
         #
         # @return [String] The path.
+        # @example
+        #   # no example
         #
         def compute_query_api_pattern_path(query_api_method_name, container, used_query_params)
           container[:path] = compute_query_api_pattern_param(query_api_method_name, container[:path], container[:params_with_defaults], used_query_params)
         end
         private :compute_query_api_pattern_path
 
-        # Computes the set of URL params for the API request.
+
+        # Computes the set of URL params for the API request
+        #
+        # @api private
         #
         # @param [String] query_api_method_name Auery API like pattern name.
         # @param [Hash] container The container for final parameters.
         # @param [Hash] used_query_params The list of used variables.
         #
         # @return [Hash] The set of URL params.
+        # @example
+        #   # no example
         #
         def compute_query_api_pattern_params(query_api_method_name, container, used_query_params)
           container[:params] = compute_query_api_pattern_param(query_api_method_name, container[:params], container[:params_with_defaults],  used_query_params)
         end
         private :compute_query_api_pattern_params
 
-        # Computes the set of headers for the API request.
+
+        # Computes the set of headers for the API request
+        #
+        # @api private
         #
         # @param [String] query_api_method_name Auery API like pattern name.
         # @param [Hash] container The container for final parameters.
         # @param [Hash] used_query_params The list of used variables.
         #
         # @return [Hash] The set of HTTP headers.
+        # @example
+        #   # no example
         #
         def compute_query_api_pattern_headers(query_api_method_name, container, used_query_params)
           container[:headers].dup.each do |header, header_values|
@@ -379,7 +456,10 @@ module RightScale
         end
         private :compute_query_api_pattern_headers
 
-        # Computes the body value for the API request.
+
+        # Computes the body value for the API request
+        #
+        # @api private
         #
         # @param [String] query_api_method_name Auery API like pattern name.
         # @param [Hash] container The container for final parameters.
@@ -387,6 +467,8 @@ module RightScale
         # @param [Hash] pattern The pattern.
         #
         # @return [Hash,String] The HTTP request body..
+        # @example
+        #   # no example
         #
         def compute_query_api_pattern_body(query_api_method_name, container, used_query_params, pattern)
           if container[:body].nil? && !pattern[:body].nil?
@@ -397,7 +479,8 @@ module RightScale
         end
         private :compute_query_api_pattern_body
 
-        # Computes single Query API pattern parameter.
+
+        # Computes single Query API pattern parameter
         #
         # @param [String] query_api_method_name Auery API like pattern name.
         # @param [Hash] source The param to compute/parse.
@@ -405,6 +488,10 @@ module RightScale
         # @param [Hash] params_with_defaults The set of parameters passed by a user + all the default
         #   values defined in wrappers.
         # 
+        # @return [Object]
+        # @example
+        #   # no example
+        #
         def compute_query_api_pattern_param(query_api_method_name, source, params_with_defaults, used_query_params) # :nodoc:
           case
           when source.is_a?(Hash)   then compute_query_api_pattern_hash_data(query_api_method_name, source, params_with_defaults, used_query_params)
@@ -415,10 +502,15 @@ module RightScale
           end
         end
 
+
         #-----------------------------------------
         # Query API pattents: HASH
         #-----------------------------------------
 
+        # Parses Query API replacements
+        #
+        # @api private
+        #
         # You may define a key so that is has a default value but you may override it if you 
         # provide another "replacement" key.
         # 
@@ -516,7 +608,10 @@ module RightScale
         end
         private :parse_query_api_pattern_replacements
 
-        # Collections.
+
+        # Collections
+        #
+        # @api private
         #
         # The simple definition delow tells us that parameters will have a key named "CloudKeyName"
         # which will point to an Array of Hashes. Where every hash will have keys: 'Key' and 'Value'
@@ -648,6 +743,11 @@ module RightScale
         end
         private :parse_query_api_pattern_collections
 
+
+        # Deals with blank values.
+        #
+        # @api private
+        #
         # If the given key responds to "blank? and it is true and it is marked as to be removed if
         # it is blank then we remove it in this method.
         #
@@ -674,7 +774,10 @@ module RightScale
         end
         private :parse_query_api_pattern_remove_blank_key
 
-        # Parses Hash objects.
+
+        # Parses Hash objects
+        #
+        # @api private
         #
         # @return [Hash]
         #
@@ -694,11 +797,12 @@ module RightScale
         end
         private :compute_query_api_pattern_hash_data
 
+
         #-----------------------------------------
-        # Query API pattents: ARRAY
+        # Query API pattern: ARRAY
         #-----------------------------------------
 
-        # Parses Array objects.
+        # Parses Array objects
         #
         # @return [Array]
         #
@@ -711,11 +815,12 @@ module RightScale
           result
         end
 
+
         #-----------------------------------------
-        # Query API pattents: STRING
+        # Query API pattern: STRING
         #-----------------------------------------
 
-        # Parses String objects.
+        # Parses String objects
         #
         # @return [String]
         #
@@ -732,11 +837,12 @@ module RightScale
           result
         end
 
+
         #-----------------------------------------
-        # Query API pattents: SYMBOL
+        # Query API pattern: SYMBOL
         #-----------------------------------------
 
-        # Parses Symbol objects.
+        # Parses Symbol objects
         #
         # @return [String]
         #

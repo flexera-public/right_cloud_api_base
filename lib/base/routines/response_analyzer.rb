@@ -93,6 +93,7 @@ module RightScale
                 fail(HttpError::new(code, error_message))
               when :reconnect_and_retry
                 close_current_connection_proc && close_current_connection_proc.call('Error pattern match')
+                @data[:vars][:retry][:http] = { :code => code, :message => error_message }
                 fail(RetryAttempt::new)
               when :abort
                 fail(HttpError::new(code, error_message))
@@ -101,6 +102,7 @@ module RightScale
                                        :routine => self,
                                        :pattern => pattern,
                                        :opts    => opts)
+                @data[:vars][:retry][:http] = { :code => code, :message => error_message }
                 fail(RetryAttempt::new)
               end
             end
@@ -129,18 +131,17 @@ module RightScale
                                    :location    => location)
             raise(RetryAttempt::new)
           else
-            fail(HttpError::new(code, "Cannot parse a redirect location"))
+            # ----- OPENSTACK BEGIN ----------------------------------------------------------
+            # some OS services like Glance returns a list of supported api versions with status 300
+            # if there is at least one href in the body we need to further analize it  in the OS manager
+            return true if body && body[/href/]
+            # ----- OPENSTACK END ----------------------------------------------------------
+            raise HttpError::new(code, "Cannot parse a redirect location")
           end
         when /^2../
           # There is nothing to do on 2xx code
           return true
         else
-          # ----- OPENSTACK BEGIN ----------------------------------------------------------
-          # ----- FIXME: this need to be re-factored ---------------------------------------
-          # some OS services like Glance returns a list of supported api versions with status 300
-          # if there is at least one href in the body we need to further analize it  in the OS manager
-          return true if body && body[/href/]
-          # ----- OPENSTACK BEGIN ----------------------------------------------------------          
           fail(Error::new("Unexpected response code: #{code.inspect}"))
         end
       end

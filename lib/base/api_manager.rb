@@ -24,26 +24,45 @@
 module RightScale
   module CloudApi
 
-    # The class is the parent class for all the cloud based thread-non-safe managers.
+    # The class is the parent class for all the cloud based thread-non-safe managers
+    #
+    # @api public
     #
     # It implements all the +generic+ functionalities the cloud specific managers share.
     #
     class ApiManager
 
-      DEFAULT_LOG_FILTERS = [:response_analyzer, :request_generator, :response_analyzer_body_error , :connection_proxy, :request_generator_body]
+      # Log filters set by default
+      DEFAULT_LOG_FILTERS = [
+        :connection_proxy,
+        :request_generator,
+        :request_generator_body,
+        :response_analyzer,
+        :response_analyzer_body_error,
+        :response_parser,
+      ]
 
+
+      # Default Error
       class Error < CloudApi::Error
       end
 
-      # Options reader.
+
+      # Options reader
       #
       # @return [Hash] The list of class level set options.
+      # @example
+      #  # no example
       #
       def self.options
         @options ||= {}
       end
 
-      # Options setter.
+
+      # Options setter
+      #
+      # @param  [Hash] options
+      # @return [void]
       #
       # @example
       #  module RightScale
@@ -58,25 +77,29 @@ module RightScale
       #    end
       #  end
       #
-      def self.set(options)
-        options.each do |key, value|
-          self.options[key] = value
-        end
+      def self.set(opts)
+        opts.each { |key, value| self.options[key] = value }
+        nil
       end
 
-      # Returns a list of routines the manager invokes while processing API request.
+
+      # Returns a list of routines the manager invokes while processing API request
       #
       # @return [Array] An array of RightScale::CloudApi::Routine.
+      # @example
+      #  # no example
       #
       def self.routines
         @routines
       end
 
-      # Add routine of the given tipe into the list of API processing routines.
+
+      # Add routine of the given tipe into the list of API processing routines
       #
-      # @param [RightScale::CloudApi::Routine] routines A set of single routines.
-      #
+      # @param  [RightScale::CloudApi::Routine] routines A set of routines.
       # @return [Array] The current set of routines.
+      # @example
+      #  # no example
       #
       def self.set_routine(*routines)
         @routines ||= []
@@ -89,64 +112,138 @@ module RightScale
         @routines
       end
 
+      # Return a set of system vars (ignore this attribute)
+      #
+      # @return [Hash]
+      # @example
+      #  # no example
+      #
       attr_reader :data
+
+      # Return a set of system routines (ignore this attribute)
+      #
+      # @return [Array]
+      # @example
+      #  # no example
+      #
       attr_reader :routines
 
-      # Api manager Initializer
+
+      # Constructor
       #
-      # @param [Hash] credentials  Basic credentials set.
-      # @param [String] endpoint  The endpoint to the cloud.
-      # @param [Hash] options At set of various options.
+      # @param [Hash]    credentials  Cloud credentials.
+      # @param [String]  endpoint     API endpoint.
+      # @param [Hash]    options      A set of options (see below).
       #
-      # @option options [Boolean] :cache Cache cloud responses when possible so that we don't parse them
-      #   again if cloud response does not change.
-      # @option options [Hash]    :creds A set of extra creds a cloud may require.
-      #   (example: :tenant_name, :tenant_id for CloudStack)
-      # @option options [Logger]  :cloud_api_logger Set to nil then logs to '/dev/nul'.
-      # @option options [Boolean,String] :random_token Adds a randon token for every request to the cloud.
-      #   If string is passed then uses it as the token parameter name.
-      # @option options [Symbol]  :xml_parser XML parser (:sax | :rexml).
-      # @option options [String]  :api_version The requested cloud API version. Every custom cloud
-      #   manager should implement this option support.
-      # @option options [Class]   :api_wrapper The Query-like API wrapper module that provides a set
-      #   of handy methods to drive the given cloud (see {RightScale::CloudApi::Mixin::QueryApiPatterns::ClassMethods})
-      # @option options [Hash]    :params A set of extra URL params to be sent with the API request.
-      # @option options [String]  :endpoint The remote cloud endpoint.
-      # @option options [Boolean] :allow_endpoint_params  Use URL params passed with the endpoint as
-      #   a set of default params otherwise they are ignored.
-      # @option options [Class]   :response_error_parser The cloud error parser.
-      # @option options [Boolean] :abort_on_timeout When set to true the does not perform a retry and fails
-      #   (false by default)
-      # @option options [String]  :connection_proxy Proxy host.
-      # @option options [String]  :connection_ca_file CA certificate for SSL connection.
-      # @option options [Integer] :connection_retry_count Max number of low level retries
-      #   to establish a connection.
-      # @option options [Integer] :connection_open_timeout Connection open timeout.
-      # @option options [Integer] :connection_read_timeout Connection read timeout.
-      # @option options [Integer] :connection_retry_delay
-      # @option options [Hash]    :cloud A set of cloud specific options. See custom cloud specific
-      #   managers for better explanation.
-      # @option options [Proc]    :before_process_api_request_callback The callback is called before
-      #   every API request (may be helpful when debugging things).
-      # @option options [Proc]    :before_routine_callback The callback is called before each
-      #   routine from the routines stack.
-      # @option options [Proc]    :after_routine_callback  The callback is called after each
-      #   routine from the routines stack.
-      # @option options [Proc]    :after_process_api_request_callback The callback is called after
-      #   the API request completion.
-      # @option options [Proc]    :before_retry_callback The callback is called if a retry attempt is
-      #   required.
-      # @option options [Proc]    :before_redirect_callback The callback is called when a redirect is
-      #   detected.
-      # @option options [Symbol]  :log_filter_patterns A set of log filters that define what to log.
-      #   (see {RightScale::CloudApi::CloudApiLogger})
+      # @option options [Boolean]  :allow_endpoint_params
+      #   When the given endpoint has any set of URL params they will not be ignored but will
+      #   be added to every API request.
       #
-      # @raise [Rightscale::CloudApi::ApiManager::Error] If no credentials have been set.
-      # @raise [Rightscale::CloudApi::ApiManager::Error] If endpoint is not set.
+      # @option options [Boolean]  :abort_on_timeout
+      #   When set to +true+ the gem does not perform a retry call when there is a connection
+      #   timeout.
+      #
+      # @option options [String]  :api_version
+      #   The required cloud API version if it is different from the default one.
+      #
+      # @option options [Class]  :api_wrapper
+      #   The Query-like API wrapper module that provides a set of handy methods to drive
+      #   REST APIs (see {RightScale::CloudApi::Mixin::QueryApiPatterns::ClassMethods})
+      #
+      # @option options [Boolean]  :cache
+      #   Cache cloud responses when possible so that we don't parse them again if cloud
+      #   response does not change (see cloud specific ApiManager definition).
+      #
+      # @option options [Hash]  :cloud
+      #  A set of cloud specific options. See custom cloud specific ApiManagers for better
+      #  explanation.
+      #
+      # @option options [String]  :connection_ca_file
+      #   CA certificate for SSL connection.
+      #
+      # @option options [Integer]  :connection_open_timeout
+      #   Connection open timeout (in seconds).
+      #
+      # @option options [String]  :connection_proxy
+      #   Connection proxy class (when it need to be different from the default one).
+      #   Only RightScale::CloudApi::ConnectionProxy::RightHttpConnectionProxy and
+      #   RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy are supported
+      #
+      # @option options [Integer]  :connection_read_timeout
+      #   Connection read timeout (in seconds).
+      #
+      # @option options [Integer]  :connection_retry_count
+      #   Max number of retries to when unable to establish a connection to API server.
+      #
+      # @option options [Integer]  :connection_retry_delay
+      #  Defines how long we wait on a low level connection error (in seconds).
+      #
+      # @option options [Hash]  :creds
+      #   A set of optional extra creds a cloud may require
+      #   (see right_cloud_stack_api gem which supports :tenant_name and :tenant_id)
+      #
+      # @option options [Hash]  :headers
+      #   A set of request headers to be added to every API call.
+      #
+      # @option options [Logger]  :logger
+      #   Current logger. If is not provided then it logs to STDOUT. When if nil is given it
+      #   logs to '/dev/nul'.
+      #
+      # @option options [Symbol]  :log_filter_patterns
+      #   A set of log filters that define what to log (see {RightScale::CloudApi::CloudApiLogger}).
+      #
+      # @option options [Hash]  :params
+      #   A set of URL params to be sent with the API request.
+      #
+      # @option options [Boolean,String]  :random_token
+      #   Some clouds API cache their responses when they receive the same request again
+      #   and again, even when we are sure that cloud response mush have changed. To deal
+      #   with this we can add a random parameter to an API call to trick the remote API.
+      #   When :random_token is set to +true+ it adds an extra param with name 'rsrcarandomtoken'
+      #   and a random value to every single API request. When :random_token is a String then
+      #   the gem uses it as the random param name.
+      #
+      # @option options [Class]  :response_error_parser
+      #   API response parser in case of error (when it needs to be different from the default one).
+      #
+      # @option options [Symbol]  :xml_parser
+      #   XML parser (:sax | :rexml are supported).
+      #
+      # @option options [Proc]  :before_process_api_request_callback
+      #   The callback is called before every API request (may be helpful when debugging things).
+      #
+      # @option options [Proc]  :before_routine_callback
+      #   The callback is called before each routine is executed.
+      #
+      # @option options [Proc]  :after_routine_callback
+      #   The callback is called after each routine is executed.
+      #
+      # @option options [Proc]  :after_process_api_request_callback
+      #   The callback is called after the API request completion.
+      #
+      # @option options [Proc]  :before_retry_callback
+      #   The callback is called if a retry attempt is required.
+      #
+      # @option options [Proc]  :before_redirect_callback
+      #   The callback is called when a redirect is detected.
+      #
+      # @option options [Proc]  :stat_data_callback
+      #   The callback is called when stat data for the current request is ready. 
+      #
+      # @raise [Rightscale::CloudApi::ApiManager::Error]
+      #   If no credentials have been set or the endpoint is blank.
+      #
+      # @example
+      #   # See cloud specific gems for use case.
+      #
+      # @see Manager
       #
       def initialize(credentials, endpoint, options={})
         @endpoint     = endpoint
         @credentials  = credentials.merge!(options[:creds] || {})
+        @credentials.each do |key, value|
+          fail(Error, "Credential #{key.inspect} cannot be empty") unless value
+        end
         @options      = options
         @options[:cloud] ||= {}
         @with_options = []
@@ -159,7 +256,7 @@ module RightScale
         # Load routines
         routine_classes = (Utils.inheritance_chain(self.class, :routines).select{|rc| !rc._blank?}.last || [])
         @routines       = routine_classes.map{ |routine_class| routine_class.new }
-        fail Error::new("Credentials must be set") if @credentials._blank?
+        # fail Error::new("Credentials must be set") if @credentials._blank?
         fail Error::new("Endpoint must be set")    if @endpoint._blank?
         # Try to wrap this manager with the handy API methods if possible using [:api_wrapper, :api_version, 'default']
         # (but do nothing if one explicitly passed :api_wrapper => nil )
@@ -171,18 +268,35 @@ module RightScale
         end
       end
 
-      # Main API request entry point.
-      # The method should not be used directly: use *api* method instead.
+
+      # Main API request entry point
+      #
+      # @api private
       #
       # @param [String,Symbol] verb          HTTP verb: :get, :post, :put, :delete, etc.
       # @param [String]        relative_path Relative URI path.
       # @param [Hash]          opts          A set of extra options.
       #
-      # @option options [Hash]        :params  A set of URL parameters.
-      # @option options [Hash]        :headers A set of HTTP headers.
-      # @option options [Hash]        :options A set of extra options: see {#initialize} method for them.
-      # @option options [Hash,String] :body    The request body. If Hash is passed then it will
-      #   convert it into String accordingly to 'content-type' header.
+      # @option options [Hash]  :params
+      #   A set of URL parameters.
+      #
+      # @option options [Hash]  :headers
+      #   A set of HTTP headers.
+      #
+      # @option options [Hash]  :options
+      #   A set of extra options: see {#initialize} method for them.
+      #
+      # @option options [Hash,String] :body
+      #   The request body. If Hash is passed then it will convert it into String accordingly to
+      #   'content-type' header.
+      #
+      # @option options [String]  :endpoint
+      #   An endpoint if it is different from the default one.
+      #
+      # @return [Object]
+      #
+      # @example
+      #  # The method should not be used directly: use *api* method instead.
       #
       # @yield [String] If a block is given it will call it on every chunk of data received from a socket.
       #
@@ -192,12 +306,20 @@ module RightScale
         # Initialize @data variable and get a final set of API request options.
         options = initialize_api_request_options(verb, relative_path, opts, &block)
         # Before_process_api_request_callback.
-        invoke_callback_method(options[:before_process_api_request_callback],
-                               :manager => self)
+        invoke_callback_method(options[:before_process_api_request_callback], :manager => self)
         # Main loop
         loop do
+          # Start a new stat session.
+          stat = {}
+          @data[:stat][:data] << stat
+          # Reset retry attempt flag.
           retry_attempt = false
+          # Loop through all the required routes.
           routines.each do |routine|
+            # Start a new stat record for current routine.
+            routine_name       = routine.class.name
+            stat[routine_name] = {}
+            stat[routine_name][:started_at] = Time.now.utc
             begin
               # Set routine data
               routine.reset(data)
@@ -223,6 +345,9 @@ module RightScale
               retry_attempt = true
               # Break the routines loop and exit into the main one.
               break
+            ensure
+              # Complete current stat session
+              stat[routine_name][:time_taken] = Time.now.utc - stat[routine_name][:started_at]
             end
           end
           # Make another attempt from the scratch or...
@@ -233,13 +358,23 @@ module RightScale
         # After_process_api_request_callback.
         invoke_callback_method(options[:after_process_api_request_callback], :manager => self)
         data[:result]
+      rescue => error
+        # Invoke :after error callback
+        invoke_callback_method(options[:after_error_callback], :manager => self, :error => error)
+        fail error
       ensure
         # Remove the unique-per-request log prefix.
         cloud_api_logger.reset_unique_prefix
+        # Complete stat data and invoke its callback.
+        @data[:stat][:time_taken] = Time.now.utc - @data[:stat][:started_at] if @data[:stat]
+        invoke_callback_method(options[:stat_data_callback], :manager => self, :stat => self.stat, :error => error)
       end
       private :process_api_request
 
-      # Initializes the @data variable and builds the request options.
+
+      # Initializes the @data variable and builds the request options
+      #
+      # @api private
       #
       # @param [String,Symbol] verb          HTTP verb: :get, :post, :put, :delete, etc.
       # @param [String]        relative_path Relative URI path.
@@ -270,11 +405,16 @@ module RightScale
         headers = (options[:headers] || {})._stringify_keys
         headers.merge!(@with_headers._stringify_keys)
         headers.merge!( opts[:headers] || {})._stringify_keys
+        # Make sure the endpoint's schema is valid.
+        parsed_endpoint = ::URI::parse(endpoint)
+        unless [nil, 'http', 'https'].include? parsed_endpoint.scheme
+          fail Error.new('Endpoint parse failed - invalid scheme')
+        end
         # Options: Build the initial data hash
         @data = {
           :options     => options.dup,
           :credentials => @credentials.dup,
-          :connection  => { :uri           => ::URI::parse(endpoint) },
+          :connection  => { :uri           => parsed_endpoint },
           :request     => { :verb          => verb.to_s.downcase.to_sym,
                             :relative_path => relative_path,
                             :headers       => HTTPHeaders::new(headers),
@@ -286,13 +426,20 @@ module RightScale
                                           :storage    => @storage,
                                           :block      => block }
                           },
-          :callbacks   => { }
+          :callbacks   => { },
+          :stat        => {
+            :started_at => Time::now.utc,
+            :data       => [ ],
+          },
         }
         options
       end
       private :initialize_api_request_options
 
-      # A helper method for invoking callbacks.
+
+      # A helper method for invoking callbacks
+      #
+      # @api private
       #
       # The method checks if the given Proc exists and invokes it with the given set of arguments.
       # In the case when proc==nil the method does nothing.
@@ -300,37 +447,111 @@ module RightScale
       # @param [Proc] proc The callback.
       # @param [Any] args A set of callback method arguments.
       #
+      # @return [void]
+      #
       def invoke_callback_method(proc, *args) # :nodoc:
         proc.call(*args) if proc.is_a?(Proc)
       end
       private :invoke_callback_method
 
 
-      # Returns the current logger.
+      # Returns the current logger
       #
       # @return [RightScale::CloudApi::CloudApiLogger]
+      # @example
+      #   # no example
       #
       def cloud_api_logger
         @options[:cloud_api_logger]
       end
 
-      # Returns the last request object.
+
+      # Returns current statistic
+      #
+      # @return [Hash]
+      #
+      # @example
+      #   # Simple case:
+      #   amazon.DescribeVolumes #=> [...]
+      #   amazon.stat #=>
+      #     {:started_at=>2014-01-03 19:09:13 UTC,
+      #      :time_taken=>2.040465903,
+      #      :data=>
+      #       [{"RightScale::CloudApi::RetryManager"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>1.7136e-05},
+      #         "RightScale::CloudApi::RequestInitializer"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>7.405e-06},
+      #         "RightScale::CloudApi::AWS::RequestSigner"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>0.000140031},
+      #         "RightScale::CloudApi::RequestGenerator"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>4.7781e-05},
+      #         "RightScale::CloudApi::RequestAnalyzer"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>3.1789e-05},
+      #         "RightScale::CloudApi::ConnectionProxy"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>2.025818663},
+      #         "RightScale::CloudApi::ResponseAnalyzer"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>0.000116668},
+      #         "RightScale::CloudApi::CacheValidator"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>1.9225e-05},
+      #         "RightScale::CloudApi::ResponseParser"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>0.014059933},
+      #         "RightScale::CloudApi::ResultWrapper"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>4.4907e-05}}]}
+      #
+      # @example
+      #   # Using callback:
+      #   STAT_DATA_CALBACK = lambda do |args|
+      #     puts "Error: #{args[:error].class.name}" if args[:error]
+      #     pp   args[:stat]
+      #   end
+      #
+      #   amazon = RightScale::CloudApi::AWS::EC2::Manager::new(
+      #     ENV['AWS_ACCESS_KEY_ID'],
+      #     ENV['AWS_SECRET_ACCESS_KEY'],
+      #     endpoint || ENV['EC2_URL'],
+      #     :stat_data_callback => STAT_DATA_CALBACK)
+      #
+      #   amazon.DescribeVolumes #=> [...]
+      #
+      #     # >> Stat data callback's output <<:
+      #     {:started_at=>2014-01-03 19:09:13 UTC,
+      #      :time_taken=>2.040465903,
+      #      :data=>
+      #       [{"RightScale::CloudApi::RetryManager"=>
+      #          {:started_at=>2014-01-03 19:09:13 UTC, :time_taken=>1.7136e-05},
+      #          ...
+      #         "RightScale::CloudApi::ResultWrapper"=>
+      #          {:started_at=>2014-01-03 19:09:15 UTC, :time_taken=>4.4907e-05}}]}
+      #
+      def stat
+        @data && @data[:stat]
+      end
+
+
+      # Returns the last request object
       #
       # @return [RightScale::CloudApi::HTTPRequest]
+      # @example
+      #  # no example
       #
       def request
         @data && @data[:request] && @data[:request][:instance]
       end
 
-      # Returns the last response object.
+
+      # Returns the last response object
       #
       # @return [RightScale::CloudApi::HTTPResponse]
+      # @example
+      #  # no example
       #
       def response
         @data && @data[:response] && @data[:response][:instance]
       end
 
-      # The method is just a wrapper around process_api_request.
+
+      # The method is just a wrapper around process_api_request
+      #
       # But this behavour can be overriden by sub-classes.
       #
       # @param [Any] args See *process_api_request* for the current ApiManager.
@@ -338,6 +559,9 @@ module RightScale
       # @yield [String] See *process_api_request* for the current ApiManager.
       #
       # @return [Any] See *process_api_request* for the current ApiManager.
+      # 
+      # @example
+      #  # see cloud specific gems
       #
       def api(*args, &block)
         process_api_request(*args, &block)
@@ -363,16 +587,18 @@ module RightScale
         EOM
       end
 
-      # Sets temporary set of options.
+
+      # Sets temporary set of options
+      #
       # The method takes a block and all the API calls made inside it will have the given set of
       # extra options. The method supports nesting.
       #
       # @param [Hash] options The set of options. See {#initialize} methos for the possible options.
-      #
+      # @return [void]
       # @yield [] All the API call made in the block will have the provided options.
       #
       # @example
-      #   # The example does not make too much sense - it just shows the nesting.
+      #   # The example does not make too much sense - it just shows the idea.
       #   ec2 = RightScale::CloudApi::AWS::EC2.new(key, secret_key, :api_version => '2009-01-01')
       #   # Describe all the instances against API '2009-01-01'.
       #   ec2.DescribeInstances
@@ -393,14 +619,28 @@ module RightScale
         @with_options.pop
       end
 
-      # Sets temporary sets of HTTP headers.
+
+      # Sets temporary sets of HTTP headers
+      #
       # The method takes a block and all the API calls made inside it will have the given set of
       # headers.
       #
       # @param [Hash] headers The set oh temporary headers.
       # @option options [option_type] option_name option_description
       #
+      # @return [void]
+      #
       # @yield [] All the API call made in the block will have the provided headers.
+      #
+      # @example
+      #   # The example does not make too much sense - it just shows the idea.
+      #   ec2 = RightScale::CloudApi::AWS::EC2.new(key, secret_key, :api_version => '2009-01-01')
+      #   ec2.with_header('agent' => 'mozzzzzillllla') do
+      #     # the header is added to every request below
+      #     ec2.DescribeInstances
+      #     ec2.DescribeImaneg
+      #     ec2.DescribeVolumes
+      #   end
       #
       def with_headers(headers={}, &block)
         @with_headers = headers || {}
@@ -409,13 +649,16 @@ module RightScale
         @with_headers = {}
       end
 
-      # Wraps the Manager with handy API helper methods.
+
+      # Wraps the Manager with handy API helper methods
       #
       # The wrappers are not necessary but may be very helpful for REST API related clouds such
       # as Amazon S3, OpenStack/Rackspace or Windows Azure.
       #
       # @param [Module,String] api_wrapper The wrapper module or a string that would help to
       # identify it.
+      #
+      # @return [void]
       #
       # @raise [RightScale::CloudApi::ApiManager::Error] If an unexpected parameter is passed.
       # @raise [RightScale::CloudApi::ApiManager::Error] If the requested wrapper does not exist.
@@ -425,7 +668,8 @@ module RightScale
       #  OpenStack: 'v1.0'       #=> 'RightScale::CloudApi::OpenStack::Wrapper::V1_0'
       #  EC2:       '2011-05-08' #=> 'RightScale::CloudApi::AWS::EC2::Wrapper::V2011_05_08'
       #
-      # P.S. See OpenStack or AWS::S3 how to use the wrappers.
+      # @example
+      #  # ignore the method
       #
       def wrap_api_with(api_wrapper=nil, raise_if_not_exist=true) # :nodoc:
         return if api_wrapper._blank?

@@ -59,6 +59,11 @@ module RightScale
         # Parse the response
         with_timer("Response parsing with #{parser}") do
           data[:response][:parsed] = parser::parse(body)
+          options = {}
+          options[:encoding] = 'UTF-8' if /utf-8/i === content_type
+          #
+          cloud_api_logger.log("Attempting to parse cloud response with: '#{options[:encoding] || 'DEFAULT'}' encoding", :response_parser)
+          @data[:response][:parsed] = parser::parse(body, options)
         end
         data[:result] = data[:response][:parsed]
       end
