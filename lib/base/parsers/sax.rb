@@ -24,44 +24,65 @@
 require 'xml/libxml'
 
 module RightScale
+
   module CloudApi
     module Parser
-      
+
       class Sax
-        
-        def self.parse(text, options = {})
+
+        UTF_8_STR = "UTF-8"
+        TEXT_MARK = "@@text"
+
+        def self.parse(input, options = {})
           # Parse the xml text
           # http://libxml.rubyforge.org/rdoc/
- 
-          xml = if options[:encoding] == "UTF-8"
-                  xml_context = ::XML::Parser::Context.string(text)
-                  xml_context.encoding = ::XML::Encoding::UTF_8
-                  ::XML::SaxParser.new(xml_context)
-                else
-                  ::XML::SaxParser::string(text)
-                end
-          xml.callbacks = new(options)
-          xml.parse
-          xml.callbacks.result
+
+          if input.is_a?(IO)
+            xml_context = ::XML::Parser::Context.io(input)
+          else
+            xml_context = ::XML::Parser::Context.string(input)
+          end
+          xml_context.encoding = ::XML::Encoding::UTF_8 if options[:encoding] == UTF_8_STR
+          sax_parser           = ::XML::SaxParser.new(xml_context)
+          sax_parser.callbacks = new(options)
+          sax_parser.parse
+          sax_parser.callbacks.result
         end
+
 
         def initialize(options = {})
-          @tag  = {}
-          @path = []
-          @options = options
+          @tag            = {}
+          @path           = []
+          @str_path       = []
+          @options        = options
+          @cached_strings = {}
         end
 
+
         def result
+          @cached_strings.clear
           @tag
         end
 
-        # Callbacks
-        
-        def on_error(msg)
-          raise msg
+
+        def cache_string(name)
+          unless @cached_strings[name]
+            name = name.freeze
+            @cached_strings[name] = name 
+          end
+          @cached_strings[name]
         end
 
+
+        # Callbacks
+
+        def on_error(msg)
+          fail msg
+        end
+
+
         def on_start_element_ns(name, attr_hash, prefix, uri, namespaces)
+          name = cache_string(name)
           # Push parent tag
           @path << @tag
           # Create a new tag
@@ -78,46 +99,53 @@ module RightScale
           current_namespaces << nil if current_namespaces._blank?
           attr_hash.each do |key, value|
             current_namespaces.each do |namespace|
-              namespace = namespace ? "#{namespace}:" : ""
-              @tag["@#{namespace}#{key}"] = value
+              namespace = namespace ? "#{namespace}:" : ''
+              namespace_and_key = cache_string("@#{namespace}#{key}")
+              @tag[namespace_and_key] = value
             end
           end
           # Put namespaces
           namespaces.each do |key, value|
-            @tag["@xmlns#{key ? ':'+key.to_s : ''}"] = value
+            namespace       = cache_string(key ? "@xmlns:#{key}" : '@xmlns')
+            @tag[namespace] = value
           end
         end
+
 
         def on_characters(chars)
           # Ignore lines that contains white spaces only
           return if chars[/\A\s*\z/m]
           # Put Text
-          if  @options[:encoding] == "UTF-8"
+          if  @options[:encoding] == UTF_8_STR
             # setting the encoding in context doesn't work(open issue with libxml-ruby).
             # force encode as a work around.
             # TODO remove the force encoding when issue in libxml is fixed
-            chars = chars.force_encoding("UTF-8") if chars.respond_to?(:force_encoding)
+            chars = chars.force_encoding(UTF_8_STR) if chars.respond_to?(:force_encoding)
           end
-          (@tag['@@text'] ||= '') << chars
-          chars
+          name = cache_string(TEXT_MARK)
+          (@tag[name] ||= '') << chars
         end
+
 
         def on_comment(msg)
           # Put Comments
+          name = cache_string('@@comment')
           (@tag['@@comment'] ||= '') << msg
         end
 
+
         def on_end_element_ns(name, prefix, uri)
+          name = cache_string(name)
           # Finalize tag's text
-          if @tag.key?('@@text') && @tag['@@text'].empty?
+          if @tag.key?(TEXT_MARK) && @tag[TEXT_MARK].empty?
             # Delete text if it is blank
-            @tag.delete('@@text')
+            @tag.delete(TEXT_MARK)
           elsif @tag.keys.count == 0
             # Set tag value to nil then the tag is blank
             @tag = nil
-          elsif @tag.keys == ['@@text']
+          elsif @tag.keys == [TEXT_MARK]
             # Set tag value to string if it has no any other data
-            @tag = @tag['@@text']
+            @tag = @tag[TEXT_MARK]
           end
           # Make sure we saved the changes
           if @path.last[name].is_a?(Array)
@@ -131,32 +159,42 @@ module RightScale
           @tag = @path.pop
         end
 
+
         def on_start_document
         end
+
 
         def on_reference (name)
         end
 
+
         def on_processing_instruction(target, data)
         end
+
 
         def on_cdata_block(cdata)
         end
 
+
         def on_has_internal_subset()
         end
 
-        def on_internal_subset (name, external_id, system_id)
+
+        def on_internal_subset(name, external_id, system_id)
         end
+
 
         def on_is_standalone ()
         end
 
+
         def on_has_external_subset ()
         end
 
+
         def on_external_subset (name, external_id, system_id)
         end
+
 
         def on_end_document
         end
