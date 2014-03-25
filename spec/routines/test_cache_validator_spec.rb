@@ -35,14 +35,14 @@ describe "RightScale::CloudApi::CacheValidator" do
     @test_data = {}
     @test_data[:request] = { :verb => 'some_verb', :orig_params => {}, :instance => 'some_request'}
     @test_data[:options] = {:error_patterns => []}
-    @callback = stub
+    @callback = double
     @test_data[:options][:cache] = {}
     @test_data[:callbacks] = {:close_current_connection => @callback}
     @test_data[:connection] = {}
     @test_data[:response] = {}
     @test_data[:vars] = {:system => {:storage => {}}}
-    @test_data[:response][:instance] = stub(:is_io? => false)
-    @cachevalidator.stub(:log => nil)
+    @test_data[:response][:instance] = double(:is_io? => false)
+    allow(@cachevalidator).to receive(:log)
   end
 
   context "cache_pattern" do
@@ -79,7 +79,7 @@ describe "RightScale::CloudApi::CacheValidator" do
       @cachevalidator.execute(@test_data).should be(true)
     end
     it "returns nil if there is no way to parse a response object" do
-      @test_data[:response][:instance] = stub(:is_io? => true)
+      @test_data[:response][:instance] = double(:is_io? => true)
       @cachevalidator.execute(@test_data).should be(nil)
     end
     it "returns nil if caching is disabled" do
@@ -92,9 +92,9 @@ describe "RightScale::CloudApi::CacheValidator" do
     before(:each) do
       RightScale::CloudApi::Utils.should_receive(:pattern_matches?).at_least(1).and_return(true)
       @cache_pattern = RightScale::CloudApi::CacheValidator::ClassMethods::CACHE_PATTERN_KEYS.inject({}) { |result, k| result.merge(k  => k.to_s)}
-      @cache_pattern[:sign] = stub(:call => "body_to_sign")
+      @cache_pattern[:sign] = double(:call => "body_to_sign")
       @test_data[:options][:cache_patterns] = [@cache_pattern]
-      @response = stub(:code => '501', :body => 'body', :headers => 'headers', :is_io? => false)
+      @response = double(:code => '501', :body => 'body', :headers => 'headers', :is_io? => false)
       @test_data[:response] = {:instance => @response}
     end
     it "fails if there is a missing key" do
@@ -129,7 +129,7 @@ describe "RightScale::CloudApi::CacheValidator" do
   context "build_cache_key" do
     before(:each) do
       # use send since this is a private method
-      @opts = {:response => stub(:body => nil)}
+      @opts = {:response => double(:body => nil)}
     end
     it "fails when it cannot create a key" do
       lambda { @cachevalidator.__send__(:build_cache_key, {}, @opts) }.should raise_error((RightScale::CloudApi::CacheValidator::Error))
@@ -139,13 +139,13 @@ describe "RightScale::CloudApi::CacheValidator" do
     end
     it "creates key and body from given inputs" do
       pattern = {:key => 'normal_key'}
-      opts    = {:response => stub(:body => "normal_body")}
+      opts    = {:response => double(:body => "normal_body")}
       @cachevalidator.__send__(:build_cache_key, pattern, opts).should == ['normal_key', 'normal_body']
     end
     it "creates key and body from given procs" do
-      proc = stub(:is_a? => true)
+      proc = double(:is_a? => true)
       proc.should_receive(:call).and_return("proc_key")
-      proc_pattern = { :key => proc, :sign => stub(:call => "proc_sign_call") }
+      proc_pattern = { :key => proc, :sign => double(:call => "proc_sign_call") }
       @cachevalidator.__send__(:build_cache_key, proc_pattern, @opts).should == ['proc_key', 'proc_sign_call']
     end
   end

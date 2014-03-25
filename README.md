@@ -1,6 +1,18 @@
-The gem provides base Query and REST API management functionalities for
-Amazon, OpenStack, Rackspace, CloudStack, etc cloud services.
 
-Private Repo, not customer facing.
+# RightCloudApi shared library
 
-Maintained by the RightScale "Orange_team".
+## Notice
+
+The gem is a dependency that is required by RightXXXApi gems family.
+
+Maintained by the RightScale "Orange_team"
+
+### Tests
+
+```
+  bundle install
+  bundle exec rake spec
+
+```
+
+## (c) RightScale

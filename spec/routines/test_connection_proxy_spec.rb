@@ -32,12 +32,13 @@ describe "RightScale::CloudApi::ConnectionProxy" do
     @test_data[:options] = {:cloud_api_logger => RightScale::CloudApi::CloudApiLogger.new({:logger => logger})}
     @test_data[:callbacks] = {}
     @test_data[:response] = {}
-    @connectionproxy.should_receive(:log).at_least(0).and_return(nil)
+    allow(@connectionproxy).to receive(:log)
+
   end
+
   it "creates a close connection callback" do
-    proxy = stub
-    proxy.should_receive(:request).once
-    RightScale::CloudApi::ConnectionProxy::RightHttpConnectionProxy.should_receive(:new).and_return(proxy)
+    proxy = double(:request => nil)
+    RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy.should_receive(:new).and_return(proxy)
     @connectionproxy.execute(@test_data)
     @test_data[:callbacks][:close_current_connection].should be_a(Proc)
   end
