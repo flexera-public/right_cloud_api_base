@@ -1,5 +1,5 @@
 require 'right_cloud_api_base'
-require 'spec'
+require 'rspec'
 
 # Generates a fake response object.
 #

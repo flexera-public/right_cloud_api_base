@@ -90,19 +90,26 @@ describe "Utils" do
       end
 
       context "self.generate_token" do
-        before(:each) do
-          UUID = '' unless defined?(UUID)
+        context "UUID" do
+          before(:each) do
+            UUID         = double('UUID', :new => double(:generate => @expectation))
+            @expectation = 'something-random-from-UUID.generate'
+          end
+          it "uses UUID when UUID is loaded" do
+            RightScale::CloudApi::Utils.generate_token == @expectation
+          end
         end
-        it "uses UUID when UUID is loaded" do
-          expectation = 'something-random-from-UUID.generate'
-          UUID.stub(:new => stub(:generate => expectation))
-          RightScale::CloudApi::Utils.generate_token == expectation
-        end
+
+        context "self.random" do
+          before(:each) do
+            UUID         = '' unless defined?(UUID)
+            @expectation = 'something-random-from-self.random'
+            UUID.should_receive(:respond_to?).with(:new).and_return(false)
+          end
         it "uses self.random when UUID is not loaded" do
-          expectation = 'something-random-from-self.random'
-          UUID.should_receive(:respond_to?).with(:new).and_return(false)
-          RightScale::CloudApi::Utils.should_receive(:random).and_return(expectation)
-          RightScale::CloudApi::Utils.generate_token == expectation
+          RightScale::CloudApi::Utils.should_receive(:random).and_return(@expectation)
+          RightScale::CloudApi::Utils.generate_token == @expectation
+        end
         end
       end
 
