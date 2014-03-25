@@ -36,12 +36,7 @@ module RightScale
         def self.parse(input, options = {})
           # Parse the xml text
           # http://libxml.rubyforge.org/rdoc/
-
-          if input.is_a?(IO)
-            xml_context = ::XML::Parser::Context.io(input)
-          else
-            xml_context = ::XML::Parser::Context.string(input)
-          end
+          xml_context          = ::XML::Parser::Context.string(input)
           xml_context.encoding = ::XML::Encoding::UTF_8 if options[:encoding] == UTF_8_STR
           sax_parser           = ::XML::SaxParser.new(xml_context)
           sax_parser.callbacks = new(options)
