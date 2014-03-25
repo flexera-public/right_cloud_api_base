@@ -291,15 +291,13 @@ class Hash #:nodoc:
           end
         end
         result << _xml_finalize_tag(tag_name, tag_attributes, tag_text, tag_elements, opts)
-      else
-        value = [value] unless value.is_a?(Array)
+      elsif value.is_a?(Array)
         value.each do |item|
-          tag_attributes = ''; tag_elements = ''; tag_text = ''
-          if item.is_a?(Hash) || item.is_a?(Array) then tag_elements = item._to_xml(next_opts)
-          else                                          tag_text     = item._xml_conditional_escape(opts)
-          end
-          result << _xml_finalize_tag(tag_name, tag_attributes, tag_text, tag_elements, opts)
+          item    = { tag_name => item } if item.is_a?(Array)
+          result << { tag_name => item }._to_xml(opts)
         end
+      else
+        result << _xml_finalize_tag(tag_name, '', value.to_s, '', opts)
       end
     end
     result

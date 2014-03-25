@@ -51,11 +51,14 @@ describe "support_xml.rb" do
 
   context "Aray#_to_xml" do
     it "builds a one-line XML by default" do
-      ['a', 2, [3, 4], 'string', :symbol, { 3 => 4 }]._to_xml.should ==
-        "<item>a</item><item>2</item><item><item>3</item><item>4</item></item><item>string</item><item>symbol</item><item><3>4</3></item>"
+      ['a', 2, [3, 4], 'string', :symbol, { 3 => 4 }, { 5 => { '@i:type' => '13', '@@text' => 555 }}].\
+        _to_xml.should ==
+          "<item>a</item><item>2</item><item><item>3</item><item>4</item></item>" +
+          "<item>string</item><item>symbol</item><item><3>4</3></item><item><5 i:type=\"13\">555</5></item>"
     end
     it "builds a multi-line XML when :indent is set" do
-      ['a', 2, [3, 4], 'string', :symbol, { 3 => 4 }]._to_xml(:tag => 'item', :indent => '  ').should ==
+      ['a', 2, [3, 4], 'string', :symbol,
+       { 3 => 4 }, { 5 => { '@i:type' => '13', '@@text' => 555 }}]._to_xml(:tag => 'item', :indent => '  ').should ==
         "<item>a</item>\n"      +
         "<item>2</item>\n"      +
         "<item>\n"              +
@@ -66,6 +69,9 @@ describe "support_xml.rb" do
         "<item>symbol</item>\n" +
         "<item>\n"              +
         "  <3>4</3>\n"          +
+        "</item>\n"             +
+        "<item>\n"              +
+        "  <5 i:type=\"13\">555</5>\n" +
         "</item>\n"
     end
   end
@@ -88,8 +94,8 @@ describe "support_xml.rb" do
     if RUBY_VERSION >= '1.9'
 
       it "builds a one-line hash by default" do
-        { 'a' => 2, :b => [1, 3, 4, { :c => { 'd' => 'something' } } ] }._to_xml.should ==
-          '<a>2</a><b>1</b><b>3</b><b>4</b><b><c><d>something</d></c></b>'
+        { 'a' => 2, :b => [1, 3, 4, { :c => { 'd' => 'something' } } ], 5 => { '@i:type' => '13', '@@text' => 555 } }._to_xml.should ==
+          '<a>2</a><b>1</b><b>3</b><b>4</b><b><c><d>something</d></c></b><5 i:type="13">555</5>'
       end
       it "builds a multi-line hash when :indent is set" do
         { 'a' => 2, :b => [1, 3, 4, { :c => { 'd' => 'something' } } ] }._to_xml(:indent => '  ').should ==
