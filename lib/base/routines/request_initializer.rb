@@ -44,7 +44,7 @@ module RightScale
           random_token_name = 'rsrcarandomtoken'
           random_token_name = data[:options][:random_token].to_s if [String, Symbol].include?(data[:options][:random_token].class)
           data[:request][:params][random_token_name] = Utils::generate_token
-       end
+        end
       end
     end
 
