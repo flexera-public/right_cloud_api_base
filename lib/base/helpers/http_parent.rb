@@ -50,15 +50,6 @@ module RightScale
       attr_accessor :body
 
 
-      # Returns the response headers
-      #
-      # @return [Hash]
-      # @example
-      #   # no example
-      #
-      attr_reader   :headers
-
-
       # Returns all the headers for the current request/response instance
       #
       # @return [Hash] The set of headers.

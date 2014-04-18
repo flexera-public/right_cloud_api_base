@@ -90,7 +90,7 @@ module RightScale
       #  # no example
       #
       def self.routines
-        @routines
+        @routines ||= []
       end
 
 
@@ -101,15 +101,14 @@ module RightScale
       # @example
       #  # no example
       #
-      def self.set_routine(*routines)
-        @routines ||= []
-        routines.flatten.each do |routine|
-          @routines << routine
+      def self.set_routine(*new_routines)
+        new_routines.flatten.each do |routine|
+          self.routines << routine
           # If a routine has ClassMethods module defined then extend the current class with those methods.
           # We use this to add class level helper methods like: error_pattern or cache_pattern
           self.extend routine::ClassMethods if defined?(routine::ClassMethods)
         end
-        @routines
+        self.routines
       end
 
       # Return a set of system vars (ignore this attribute)
@@ -265,7 +264,7 @@ module RightScale
         unless @options.has_key?(:api_wrapper) && @options[:api_wrapper].nil?
           # And then wrap with the most recent or user's wrapper
           [ @options[:api_wrapper], @options[:api_version], 'default'].uniq.each do |api_wrapper|
-            break if wrap_api_with(api_wrapper, raise_if_not_exist = false)
+            break if wrap_api_with(api_wrapper, false)
           end
         end
       end

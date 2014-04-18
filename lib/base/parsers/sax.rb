@@ -125,7 +125,7 @@ module RightScale
         def on_comment(msg)
           # Put Comments
           name = cache_string('@@comment')
-          (@tag['@@comment'] ||= '') << msg
+          (@tag[name] ||= '') << msg
         end
 
 
