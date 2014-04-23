@@ -40,6 +40,13 @@ module RightScale
         xml_parser   = Utils::get_xml_parser_class(data[:options][:xml_parser])
         content_type = (data[:response][:instance].headers || {})["content-type"].to_s
         body         = data[:response][:instance].body.to_s
+
+        # If it was explicitly requested not to parse the response then return it as is.
+        if data[:options][:raw_response]
+          data[:result] = body
+          return
+        end
+
         # Find the appropriate parser.
         parser = if body._blank?
                    Parser::Plain

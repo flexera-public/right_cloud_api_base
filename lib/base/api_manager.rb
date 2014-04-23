@@ -204,6 +204,11 @@ module RightScale
       #   and a random value to every single API request. When :random_token is a String then
       #   the gem uses it as the random param name.
       #
+      # @option options [Boolean] :raw_response
+      #   By default the gem parses all XML and JSON responses and returns them as ruby Hashes.
+      #   Sometimes it is not what one would want (Amazon S3 GetObject for example).
+      #   Setting this option to +true+ forces the gem to return a not parsed response. 
+      #
       # @option options [Class]  :response_error_parser
       #   API response parser in case of error (when it needs to be different from the default one).
       #
