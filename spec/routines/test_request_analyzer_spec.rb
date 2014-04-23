@@ -84,7 +84,7 @@ describe "RightScale::CloudApi::RequestAnalyzer" do
                             :cloud_api_logger => RightScale::CloudApi::CloudApiLogger.new({:logger => logger,
                                                                                            :log_filters => [:request_generator] })}}
       @requestanalyzer = RightScale::CloudApi::RequestAnalyzer.new
-      @requestanalyzer.stub(:log => nil)
+      allow(@requestanalyzer).to receive(:log)
     end
 
     context "when patern does not match" do

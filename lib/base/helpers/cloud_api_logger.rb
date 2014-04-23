@@ -24,40 +24,40 @@
 module RightScale
   module CloudApi
 
-     # Cloud API Logger wraps the given logger or creates a new one which logs to null by default
-     # By default the logger logs at INFO level.
-     #
-     # Every log message should be associated with a log_filter(key). If no log filter(key) is
-     # specified, then a message is logged and is not filterable.
-     #
-     # Any log_message with its key specified in log_filters is logged. If log_filters are not
-     # specified then the log_messages which is not associated by the key is logged.
-     #
-     # If parent logger is set at DEBUG level then all the messages are logged by default.
-     #
-     class CloudApiLogger
+    # Cloud API Logger wraps the given logger or creates a new one which logs to null by default
+    # By default the logger logs at INFO level.
+    #
+    # Every log message should be associated with a log_filter(key). If no log filter(key) is
+    # specified, then a message is logged and is not filterable.
+    #
+    # Any log_message with its key specified in log_filters is logged. If log_filters are not
+    # specified then the log_messages which is not associated by the key is logged.
+    #
+    # If parent logger is set at DEBUG level then all the messages are logged by default.
+    #
+    class CloudApiLogger
 
       # Attribute readers
       #
       # @return [Object]
       # @example
       #   # no example
-      attr_reader :logger, :log_filters, :log_filter_patterns, :request_log_tag
+      attr_reader :logger, :log_filters, :log_filter_patterns
 
-       # Initializes a new logger
-       #
-       # @param [Hash] options A set of options
-       # @option options [String,IO] :logger  Creates a new Logger instance from teh given value.
-       # @option options [NilClass]  :logger  Creates a new Logger instance that logs to STDOUT.
-       # @option options [Array]     :log_filters  An array of topics to log (see {help}
-       #   for list of keys)
-       # @option options [Array]     :log_filter_patterns  An array of Strings or RegExps of things
-       #   that have to be filtered out from logs.
-       #
-       # @example
-       #  new(:logger => STDOUT)
-       #
-       def initialize(options = {} , default_filters = [])
+      # Initializes a new logger
+      #
+      # @param [Hash] options A set of options
+      # @option options [String,IO] :logger  Creates a new Logger instance from teh given value.
+      # @option options [NilClass]  :logger  Creates a new Logger instance that logs to STDOUT.
+      # @option options [Array]     :log_filters  An array of topics to log (see {help}
+      #   for list of keys)
+      # @option options [Array]     :log_filter_patterns  An array of Strings or RegExps of things
+      #   that have to be filtered out from logs.
+      #
+      # @example
+      #  new(:logger => STDOUT)
+      #
+      def initialize(options = {} , default_filters = [])
         @logger = options[:logger]
         if @logger.is_a?(String) || @logger.is_a?(IO)
           @logger                 = ::Logger::new(options[:logger])

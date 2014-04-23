@@ -33,10 +33,14 @@ describe "RightScale::CloudApi::ResultWrapper" do
                              :cloud_api_logger => RightScale::CloudApi::CloudApiLogger.new({:logger => logger})}
     @test_data[:vars] = {}
     @test_data[:callbacks] = {}
+
+    @parsed_response    = "parsed_response"
+    @test_data[:result] = @parsed_response
+
     @headers = { 'header1' => ['1'], 'header2' => ['2'] }
     @response= generate_http_response(201, 'body', @headers)
-    @test_data[:response] = {:instance => @response, :parsed => "parsed_response"}
-    @resultwrapper.stub(:log => nil)
+    @test_data[:response] = {:instance => @response, :parsed => @parsed_response }
+    allow(@resultwrapper).to receive(:log)
     @test_data[:vars][:current_cache_key] = "cache_key"
     @test_data[:vars][:cache] = {'cache_key' => { :key => 'old_cache_record_key', :record => 'haha' }}
     @result = @resultwrapper.execute(@test_data)

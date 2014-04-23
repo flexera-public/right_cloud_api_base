@@ -67,7 +67,7 @@ module RightScale
         metadata[:code]    = data[:response][:instance].code
         metadata[:cache]   = cache if cache
         #
-        data[:result] = Result::new(data[:response][:parsed], metadata)
+        data[:result] = Result::new(data[:result], metadata)
       end
     end
     
