@@ -694,10 +694,11 @@ module RightScale
         else
           _module = api_wrapper
         end
-        if _module && !_extended?(_module)
-          extend(_module)
-          cloud_api_logger.log("Wrapper: wrapped: #{_module.inspect}.", :wrapper)
-        end
+        # Exit if there is no wrapper or it is already in use
+        return false if !_module || _extended?(_module)
+        # Use the wrapper
+        extend(_module)
+        cloud_api_logger.log("Wrapper: wrapped: #{_module.inspect}.", :wrapper)
         true
       end
 
