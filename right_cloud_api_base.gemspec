@@ -56,7 +56,8 @@ Amazon, OpenStack, Rackspace, CloudStack, etc cloud services.
 
 EOF
 
-  candidates      = Dir.glob('{lib,spec}/**/*') + ['HISTORY', 'README.md', 'Rakefile', 'right_cloud_api_base.gemspec']
+  candidates      = Dir.glob('{lib,spec}/**/*') +
+                    ['LICENSE', 'HISTORY', 'README.md', 'Rakefile', 'right_cloud_api_base.gemspec']
   spec.files      = candidates.sort
   spec.test_files = Dir.glob('spec/**/*')
 end
