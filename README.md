@@ -1,9 +1,7 @@
 
 # RightCloudApi shared library
 
-## Notice
-
-The gem is a dependency that is required by RightXXXApi gems family.
+This is a Ruby gem that provides common code to all RightScale cloud libraries. It is required by the respective cloud library gems. See https://github.com/rightscale/right_aws_api for example. 
 
 ### Tests
 
@@ -13,4 +11,4 @@ The gem is a dependency that is required by RightXXXApi gems family.
 
 ```
 
-## (c) RightScale
+### (c) 2014 by RightScale, Inc., see the LICENSE file for the open-source license.
