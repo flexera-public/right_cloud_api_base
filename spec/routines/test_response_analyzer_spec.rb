@@ -92,7 +92,7 @@ describe "RightScale::CloudApi::ResponseAnalyzer" do
     before(:each) do
       @test_data[:options][:error_patterns] = [{:action => :reconnect_and_retry}]
       RightScale::CloudApi::Utils.should_receive(:pattern_matches?).at_least(1).and_return(true)
-      @close_current_connection_callback.should_receive(:call).twice.with('Error pattern match')
+      @close_current_connection_callback.should_receive(:call).twice.with(/Error code/)
     end
     it "raises a retry attempt exception for 4xx and 5xx errors" do
       [500, 400].each do |http_error|
@@ -106,7 +106,7 @@ describe "RightScale::CloudApi::ResponseAnalyzer" do
     before(:each) do
       @test_data[:options][:error_patterns] = [{:action => :disconnect_and_abort}]
       RightScale::CloudApi::Utils.should_receive(:pattern_matches?).at_least(1).and_return(true)
-      @close_current_connection_callback.should_receive(:call).twice.with('Error pattern match')
+      @close_current_connection_callback.should_receive(:call).twice.with(/Error code/)
     end
     it "failse for 4xx and 5xx errors" do
       [500, 400].each do |http_error|
