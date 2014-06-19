@@ -154,92 +154,92 @@ describe "QueryApiPattern" do
 
   context "query_api_pattern" do
     it "fails when there is an unexpected parameter" do
-      lambda {
+      expect {
         @api_manager.class.query_api_pattern(:GetService, :get, '', :unknown_something => 'blah-blah')
-      }.should raise_error(RightScale::CloudApi::Error)
+      }.to raise_error(RightScale::CloudApi::Error)
     end
   end
 
   it "works when there are no issues and generates request data properly" do
     data    = @api_manager.GetService
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path]._blank?.should be(true)
-    request[:headers].to_hash._blank?.should be(true)
-    request[:params]._blank?.should be(true)
-    request[:body].nil?.should be(true)
+    expect(request[:verb]).to eq(:get)
+    expect(request[:relative_path]._blank?).to be(true)
+    expect(request[:headers].to_hash._blank?).to be(true)
+    expect(request[:params]._blank?).to be(true)
+    expect(request[:body].nil?).to be(true)
   end
 
   it "moves all unused variables into URL params" do
     data    = @api_manager.GetService('Param1' => 'value1', 'Param2' => 'value2')
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path]._blank?.should be(true)
-    request[:headers].to_hash._blank?.should be(true)
-    request[:params].should == {'Param1' => 'value1', 'Param2' => 'value2'}
-    request[:body].should be(nil)
+    expect(request[:verb]).to eq(:get)
+    expect(request[:relative_path]._blank?).to be(true)
+    expect(request[:headers].to_hash._blank?).to be(true)
+    expect(request[:params]).to eq('Param1' => 'value1', 'Param2' => 'value2')
+    expect(request[:body]).to be(nil)
   end
 
   it "works for GetResource Query API definition" do
     data    = @api_manager.GetResource
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path].should == 'resource/1'
-    request[:headers].to_hash._blank?.should be(true)
-    request[:params]._blank?.should be(true)
-    request[:body].should be(nil)
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]).to eq 'resource/1'
+    expect(request[:headers].to_hash._blank?).to be(true)
+    expect(request[:params]._blank?).to be(true)
+    expect(request[:body]).to be(nil)
   end
 
   it "works for GetResourceWithHardcodedData Query API definition" do
     data    = @api_manager.GetResourceWithHardcodedData
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path].should == 'resource/1'
-    request[:headers].to_hash.should == {'x-text-header' => ['my-test-value']}
-    request[:params].should == { 'p1' => 1, 'p2' => 2 }
-    request[:body].should == 'MyTestStringBody'
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]).to eq 'resource/1'
+    expect(request[:headers].to_hash).to eq('x-text-header' => ['my-test-value'])
+    expect(request[:params]).to eq('p1' => 1, 'p2' => 2 )
+    expect(request[:body]).to eq 'MyTestStringBody'
   end
 
   it "works for GetResourceWithVars Query API definition" do
     data    = @api_manager.GetResourceWithVars( 'ResourceId' => 123, 'Param1' => 11, 'Param2' => 12, 'MyHeader' => 'x-test-something', 'MyBody' => 'MyTestStringBody')
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path].should == 'resource/123'
-    request[:headers].to_hash.should == {'x-text-header' => ['x-test-something']}
-    request[:params].should == { 'p1' => 11, 'p2' => 12 }
-    request[:body].should == 'MyTestStringBody'
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]).to eq 'resource/123'
+    expect(request[:headers].to_hash).to eq('x-text-header' => ['x-test-something'])
+    expect(request[:params]).to eq( 'p1' => 11, 'p2' => 12 )
+    expect(request[:body]).to eq 'MyTestStringBody'
   end
 
   it "fails when a mandatory variable is missing" do
-    lambda { @api_manager.GetResourceWithVars }.should raise_error(RightScale::CloudApi::Error)
+    expect{ @api_manager.GetResourceWithVars }.to raise_error(RightScale::CloudApi::Error)
   end
 
   it "works for GetResourceWithFlexibleVars Query API definition" do
     data    = @api_manager.GetResourceWithFlexibleVars( 'ResourceId' => 1, 'SubresourceId' => 2, 'MyHeaderSource' => 3, 'MyHeaderKey' => 4, 'BodyParam1' => 5, 'BodyParam2' => 6)
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path].should == 'resource/1/subresource/2'
-    request[:headers].to_hash.should == {'x-text-header' => ['3/4']}
-    request[:body].should == 'text-5-text-again-6'
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]).to eq 'resource/1/subresource/2'
+    expect(request[:headers].to_hash).to eq('x-text-header' => ['3/4'])
+    expect(request[:body]).to eq 'text-5-text-again-6'
   end
 
   it "works for GetResourceWithFlexibleVarsAndDefaults Query API definition" do
     data    = @api_manager.GetResourceWithFlexibleVarsAndDefaults('ResourceId' => 1, 'MyHeaderKey' => 3, 'BodyParam1' => 5)
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path].should == 'resource/1/subresource/2'
-    request[:headers].to_hash.should == {'x-text-header' => ['something/3']}
-    request[:body].should == 'text-5-text-again-'
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]).to eq 'resource/1/subresource/2'
+    expect(request[:headers].to_hash).to eq('x-text-header' => ['something/3'])
+    expect(request[:body]).to eq 'text-5-text-again-'
   end
 
   it "works for GetResourceWithFlexibleVarsAndDefaultsV2 Query API definition" do
     data    = @api_manager.GetResourceWithFlexibleVarsAndDefaultsV2('Value2' => 1)
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path]._blank?.should be(true)
-    request[:headers].to_hash._blank?.should be(true)
-    request[:params]._blank?.should be(true)
-    request[:body].should == {'Key1' => 'Value1', 'Key2' => 1, 'Key3' => {}}
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]._blank?).to be(true)
+    expect(request[:headers].to_hash._blank?).to be(true)
+    expect(request[:params]._blank?).to be(true)
+    expect(request[:body]).to eq('Key1' => 'Value1', 'Key2' => 1, 'Key3' => {})
   end
 
   it "works for GetResourceWithFlexibleVarsAndCollection Query API definition" do
@@ -248,65 +248,65 @@ describe "QueryApiPattern" do
                 'Collection2' => [{'Name2' => 'x21', 'Value2' => 'xv21'}, {'Name2' => 'x22', 'Value2' => 'v22'}]
               )
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path]._blank?.should be(true)
-    request[:headers].to_hash._blank?.should be(true)
-    request[:params]._blank?.should be(true)
-    request[:body].should == {'Key1' => 1,
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]._blank?).to be(true)
+    expect(request[:headers].to_hash._blank?).to be(true)
+    expect(request[:params]._blank?).to be(true)
+    expect(request[:body]).to eq('Key1' => 1,
                               'Collection' => [{'Name' => 'x1', 'Value' => 'xv1'}, {'Name' => 'x2', 'Value' => 13}],
-                              'Collection2' => [{'Name2' => 'x21', 'Value2' => 'xv21'}, {'Name2' => 'x22', 'Value2' => 'v22'}]}
+                              'Collection2' => [{'Name2' => 'x21', 'Value2' => 'xv21'}, {'Name2' => 'x22', 'Value2' => 'v22'}])
   end
 
   it "works for GetResourceWithSubCollectionReplacement Query API definition" do
     # Nothing is pased - should complain
-    lambda {
+    expect {
       @api_manager.GetResourceWithSubCollectionReplacement('Value1' => 1)
-    }.should raise_error(RightScale::CloudApi::Error)
+    }.to raise_error(RightScale::CloudApi::Error)
     # A replacement is passed - must replace
     data    = @api_manager.GetResourceWithSubCollectionReplacement('Value1' => 1, 'Collections' => 'blah-blah')
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path]._blank?.should be(true)
-    request[:headers].to_hash._blank?.should be(true)
-    request[:params]._blank?.should be(true)
-    request[:body].should == {'Key1' => 1, 'Collections' => 'blah-blah'}
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]._blank?).to be(true)
+    expect(request[:headers].to_hash._blank?).to be(true)
+    expect(request[:params]._blank?).to be(true)
+    expect(request[:body]).to eq('Key1' => 1, 'Collections' => 'blah-blah')
 
     data    = @api_manager.GetResourceWithSubCollectionReplacement('Value1' => 1, 'Items' => [{'Name' => 'x1', 'Value' => 'xv1'}, {'Name' => 'x2'}])
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path]._blank?.should be(true)
-    request[:headers].to_hash._blank?.should be(true)
-    request[:params]._blank?.should  be(true)
-    request[:body].should == {'Key1' => 1, 'Collections' => {'Collection' => [{'Name' => 'x1', 'Value' => 'xv1'}, {'Name' => 'x2', 'Value' => 13}]}}
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]._blank?).to be(true)
+    expect(request[:headers].to_hash._blank?).to be(true)
+    expect(request[:params]._blank?).to  be(true)
+    expect(request[:body]).to eq('Key1' => 1, 'Collections' => {'Collection' => [{'Name' => 'x1', 'Value' => 'xv1'}, {'Name' => 'x2', 'Value' => 13}]})
   end
 
   it "works for GetResourceWithSubCollectionReplacementAndDefaults Query API definition" do
     data    = @api_manager.GetResourceWithSubCollectionReplacementAndDefaults('Value1' => 1)
     request = data[:request]
-    request[:verb].should == :get
-    request[:relative_path]._blank?.should be(true)
-    request[:headers].to_hash._blank?.should be(true)
-    request[:params]._blank?.should be(true)
-    request[:body].should == {'Key1' => 1 }
+    expect(request[:verb]).to eq :get
+    expect(request[:relative_path]._blank?).to be(true)
+    expect(request[:headers].to_hash._blank?).to be(true)
+    expect(request[:params]._blank?).to be(true)
+    expect(request[:body]).to eq('Key1' => 1 )
   end
 
   it "works for GetResourceWithBlock Query API definition" do
     data    = @api_manager.GetResourceWithBlock
     request = data[:request]
-    request[:verb].should == :post
-    request[:relative_path].should == 'my-new-path'
-    request[:headers].to_hash.should == {'x-my-header' => ['value']}
-    request[:params].should == { 'p1' => 'v1'}
-    request[:body].should == 'MyBody'
+    expect(request[:verb]).to eq :post
+    expect(request[:relative_path]).to eq 'my-new-path'
+    expect(request[:headers].to_hash).to eq('x-my-header' => ['value'])
+    expect(request[:params]).to eq( 'p1' => 'v1')
+    expect(request[:body]).to eq 'MyBody'
   end
 
   it "works for GetResourceWithProc Query API definition" do
     data    = @api_manager.GetResourceWithProc
     request = data[:request]
-    request[:verb].should == :post
-    request[:relative_path].should == 'my-new-path'
-    request[:headers].to_hash.should == {'x-my-header' => ['value']}
-    request[:params].should == { 'p1' => 'v1'}
-    request[:body].should == 'MyBody'
+    expect(request[:verb]).to eq :post
+    expect(request[:relative_path]).to eq 'my-new-path'
+    expect(request[:headers].to_hash).to eq('x-my-header' => ['value'])
+    expect(request[:params]).to eq( 'p1' => 'v1')
+    expect(request[:body]).to eq 'MyBody'
   end
 end

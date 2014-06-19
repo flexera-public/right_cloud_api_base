@@ -54,7 +54,7 @@ describe "RightScale::CloudApi::ResponseParser" do
           :header_info_for_log => ""
         )
         @test_data[:response] = {:instance => response}
-        RightScale::CloudApi::Parser::Sax.should_receive(:parse).\
+        expect(RightScale::CloudApi::Parser::Sax).to receive(:parse).\
           once.with('body', {:encoding => 'UTF-8'})
       end
 
@@ -76,7 +76,7 @@ describe "RightScale::CloudApi::ResponseParser" do
           :header_info_for_log => ""
         )
         @test_data[:response] = {:instance => response}
-        RightScale::CloudApi::Parser::Sax.should_receive(:parse).\
+        expect(RightScale::CloudApi::Parser::Sax).to receive(:parse).\
           once.with('body', {:encoding => 'UTF-8'})
       end
 
@@ -98,7 +98,7 @@ describe "RightScale::CloudApi::ResponseParser" do
           :header_info_for_log => ""
         )
         @test_data[:response] = {:instance => response}
-        RightScale::CloudApi::Parser::Sax.should_receive(:parse).\
+        expect(RightScale::CloudApi::Parser::Sax).to receive(:parse).\
           once.with('body', {})
       end
 
@@ -120,7 +120,7 @@ describe "RightScale::CloudApi::ResponseParser" do
           :header_info_for_log => ""
         )
         @test_data[:response] = {:instance => response}
-        RightScale::CloudApi::Parser::Sax.should_receive(:parse).\
+        expect(RightScale::CloudApi::Parser::Sax).to receive(:parse).\
           once.with('body', {})
       end
 
@@ -142,7 +142,7 @@ describe "RightScale::CloudApi::ResponseParser" do
           :header_info_for_log => ""
         )
         @test_data[:response] = {:instance => response}
-        RightScale::CloudApi::Parser::Json.should_receive(:parse).\
+        expect(RightScale::CloudApi::Parser::Json).to receive(:parse).\
           once.with('body', {})
       end
 
@@ -164,7 +164,7 @@ describe "RightScale::CloudApi::ResponseParser" do
           :header_info_for_log => ""
         )
         @test_data[:response] = {:instance => response}
-        RightScale::CloudApi::Parser::Json.should_receive(:parse).\
+        expect(RightScale::CloudApi::Parser::Json).to receive(:parse).\
           once.with('body', {:encoding => 'UTF-8'})
       end
 

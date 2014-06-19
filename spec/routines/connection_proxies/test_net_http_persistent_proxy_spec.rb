@@ -58,7 +58,7 @@ describe "RightScale::CloudApi::ConnectionProxy::NetHTTPPersistentProxy" do
       @connection = double(
         :request                => @response,
         :retry_change_requests= => true )
-      Net::HTTP::Persistent.should_receive(:new).and_return(@connection)
+      expect(Net::HTTP::Persistent).to receive(:new).and_return(@connection)
     end
 
     it "works" do
@@ -70,14 +70,14 @@ describe "RightScale::CloudApi::ConnectionProxy::NetHTTPPersistentProxy" do
   context "when there is a connection issue" do
     before :each do
       @connection = double( :retry_change_requests= => true )
-      Net::HTTP::Persistent.should_receive(:new).and_return(@connection)
+      expect(Net::HTTP::Persistent).to receive(:new).and_return(@connection)
       # failure in the connection should finish and reraise the error
-      @connection.should_receive(:request).and_raise(StandardError.new("Banana"))
-      @connection.should_receive(:shutdown)
+      expect(@connection).to receive(:request).and_raise(StandardError.new("Banana"))
+      expect(@connection).to receive(:shutdown)
     end
 
     it "works" do
-      lambda { @proxy.request(@test_data) }.should raise_error(Exception)
+      expect { @proxy.request(@test_data) }.to raise_error(Exception)
     end
   end
 
@@ -88,18 +88,18 @@ describe "RightScale::CloudApi::ConnectionProxy::NetHTTPPersistentProxy" do
         :retry_change_requests= => true,
         :shutdown => true
        )
-      Net::HTTP::Persistent.should_receive(:new).and_return(@connection)
+      expect(Net::HTTP::Persistent).to receive(:new).and_return(@connection)
     end
 
     context "when retries are disabled" do
       before:each do
-        @connection.should_receive(:request).and_raise( Timeout::Error)
+        expect(@connection).to receive(:request).and_raise( Timeout::Error)
         @test_data[:options][:connection_retry_count] = 0
-        @proxy.should_receive(:sleep).never
+        expect(@proxy).to receive(:sleep).never
       end
 
       it "makes no retries" do
-        lambda { @proxy.request(@test_data) }.should raise_error(RightScale::CloudApi::ConnectionError)
+        expect { @proxy.request(@test_data) }.to raise_error(RightScale::CloudApi::ConnectionError)
       end
     end
 
@@ -108,13 +108,13 @@ describe "RightScale::CloudApi::ConnectionProxy::NetHTTPPersistentProxy" do
       context "timeouts are enabled" do
         before:each do
           @retries_count = 3
-          @connection.should_receive(:request).exactly(@retries_count+1).times.and_raise( Timeout::Error)
+          expect(@connection).to receive(:request).exactly(@retries_count+1).times.and_raise( Timeout::Error)
           @test_data[:options][:connection_retry_count] = @retries_count
-          @proxy.should_receive(:sleep).exactly(@retries_count).times
+          expect(@proxy).to receive(:sleep).exactly(@retries_count).times
         end
 
         it "makes no retries" do
-          lambda { @proxy.request(@test_data) }.should raise_error(RightScale::CloudApi::ConnectionError)
+          expect { @proxy.request(@test_data) }.to raise_error(RightScale::CloudApi::ConnectionError)
         end
       end
 
@@ -127,15 +127,15 @@ describe "RightScale::CloudApi::ConnectionProxy::NetHTTPPersistentProxy" do
         end
 
         it "makes no retries on timeout" do
-          @connection.should_receive(:request).and_raise(Timeout::Error)
-          @proxy.should_receive(:sleep).never
-          lambda { @proxy.request(@test_data) }.should raise_error(RightScale::CloudApi::ConnectionError)
+          expect(@connection).to receive(:request).and_raise(Timeout::Error)
+          expect(@proxy).to receive(:sleep).never
+          expect { @proxy.request(@test_data) }.to raise_error(RightScale::CloudApi::ConnectionError)
         end
 
         it "makes retries on non timeout errors" do
-          @connection.should_receive(:request).exactly(@retries_count+1).times.and_raise(SocketError)
-          @proxy.should_receive(:sleep).exactly(@retries_count).times
-          lambda { @proxy.request(@test_data) }.should raise_error(RightScale::CloudApi::ConnectionError)
+          expect(@connection).to receive(:request).exactly(@retries_count+1).times.and_raise(SocketError)
+          expect(@proxy).to receive(:sleep).exactly(@retries_count).times
+          expect { @proxy.request(@test_data) }.to raise_error(RightScale::CloudApi::ConnectionError)
         end
       end
     end
