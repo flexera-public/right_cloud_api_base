@@ -85,14 +85,14 @@ module RightScale
           # Walk through all the patterns and find the first that matches.
           error_patterns.each do |pattern|
             if Utils::pattern_matches?(pattern, opts)
-              cloud_api_logger.log("Response matches to error pattern: #{pattern.inspect}", :response_analyzer)
-              # Take the requered action.
+              cloud_api_logger.log("Error code: #{code}, pattern match: #{pattern.inspect}", :response_analyzer, :warn)
+              # Take the required action.
               case pattern[:action]
               when :disconnect_and_abort
-                close_current_connection_proc && close_current_connection_proc.call('Error pattern match')
+                close_current_connection_proc && close_current_connection_proc.call("Error code: #{code}")
                 fail(HttpError::new(code, error_message))
               when :reconnect_and_retry
-                close_current_connection_proc && close_current_connection_proc.call('Error pattern match')
+                close_current_connection_proc && close_current_connection_proc.call("Error code: #{code}")
                 @data[:vars][:retry][:http] = { :code => code, :message => error_message }
                 fail(RetryAttempt::new)
               when :abort
