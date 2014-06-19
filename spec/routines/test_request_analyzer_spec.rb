@@ -41,7 +41,7 @@ describe "RightScale::CloudApi::RequestAnalyzer" do
       expected_result = []
       @valid_request_actions.each do |action|
         expected_result << @valid_request_keys.merge(:action => action)
-        @api_manager.class.error_pattern(action, @valid_request_keys).should == expected_result
+        expect(@api_manager.class.error_pattern(action, @valid_request_keys)).to eq expected_result
       end
     end
   end
@@ -55,7 +55,7 @@ describe "RightScale::CloudApi::RequestAnalyzer" do
       expected_result = []
       @valid_response_actions.each do |action|
         expected_result << @valid_response_keys.merge(:action => action)
-        @api_manager.class.error_pattern(action, @valid_response_keys).should == expected_result
+        expect(@api_manager.class.error_pattern(action, @valid_response_keys)).to eq expected_result
       end
     end
   end
@@ -63,9 +63,9 @@ describe "RightScale::CloudApi::RequestAnalyzer" do
   context "with unexpected keys" do
     it "fails to create a pattern" do
       valid_request_action = :abort_on_timeout
-      lambda { @api_manager.class.error_pattern(valid_request_action, {:bad_key => "BadKey"}) }.should raise_error(RightScale::CloudApi::RequestAnalyzer::Error)
-      lambda { @api_manager.class.error_pattern(:bad_action, {:verb => /verb/}) }.should raise_error(RightScale::CloudApi::RequestAnalyzer::Error)
-      lambda { @api_manager.class.error_pattern(valid_request_action, {:response => /verb/}) }.should raise_error(RightScale::CloudApi::RequestAnalyzer::Error)
+      expect { @api_manager.class.error_pattern(valid_request_action, {:bad_key => "BadKey"}) }.to raise_error(RightScale::CloudApi::RequestAnalyzer::Error)
+      expect { @api_manager.class.error_pattern(:bad_action, {:verb => /verb/}) }.to raise_error(RightScale::CloudApi::RequestAnalyzer::Error)
+      expect { @api_manager.class.error_pattern(valid_request_action, {:response => /verb/}) }.to raise_error(RightScale::CloudApi::RequestAnalyzer::Error)
     end
   end
 
@@ -89,17 +89,17 @@ describe "RightScale::CloudApi::RequestAnalyzer" do
 
     context "when patern does not match" do
       it "does not set :abort_on_timeout flag" do
-        RightScale::CloudApi::Utils.should_receive(:pattern_matches?).and_return(false)
+        expect(RightScale::CloudApi::Utils).to receive(:pattern_matches?).and_return(false)
         @requestanalyzer.execute(@data)
-        @data[:options].has_key?(:abort_on_timeout).should be(false)
+        expect(@data[:options].has_key?(:abort_on_timeout)).to be(false)
       end
     end
 
     context "when patern matches" do
       it "sets :abort_on_timeout flag" do
-        RightScale::CloudApi::Utils.should_receive(:pattern_matches?).and_return(true)
+        expect(RightScale::CloudApi::Utils).to receive(:pattern_matches?).and_return(true)
         @requestanalyzer.execute(@data)
-        @data[:options][:abort_on_timeout].should be(true)
+        expect(@data[:options][:abort_on_timeout]).to be(true)
       end
     end
   end

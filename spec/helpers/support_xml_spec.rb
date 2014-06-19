@@ -29,21 +29,23 @@ describe "support_xml.rb" do
 
   context "Object#_xml_escale" do
     it "escapes non-xml symbols" do
-      "Hello <'world'> & \"the Universe\""._xml_escape.should ==
+      expect("Hello <'world'> & \"the Universe\""._xml_escape).to eq(
         "Hello &lt;&apos;world&apos;&gt; &amp; &quot;the Universe&quot;"
+      )
     end
   end
 
   context "Object#_xml_unescale" do
     it "unescapes non-xml symbols" do
-      "Hello &lt;&apos;world&apos;&gt; &amp; &quot;the Universe&quot;"._xml_unescape.should ==
+      expect("Hello &lt;&apos;world&apos;&gt; &amp; &quot;the Universe&quot;"._xml_unescape).to eq(
         "Hello <'world'> & \"the Universe\""
+      )
     end
   end
 
   context "Object#_to_xml" do
     it "returns a simple XML string" do
-      "hahaha"._to_xml.should == 'hahaha'
+      expect("hahaha"._to_xml).to eq 'hahaha'
     end
   end
 
@@ -51,14 +53,15 @@ describe "support_xml.rb" do
 
   context "Aray#_to_xml" do
     it "builds a one-line XML by default" do
-      ['a', 2, [3, 4], 'string', :symbol, { 3 => 4 }, { 5 => { '@i:type' => '13', '@@text' => 555 }}].\
-        _to_xml.should ==
+      expect(['a', 2, [3, 4], 'string', :symbol, { 3 => 4 }, { 5 => { '@i:type' => '13', '@@text' => 555 }}].\
+        _to_xml).to eq(
           "<item>a</item><item>2</item><item><item>3</item><item>4</item></item>" +
           "<item>string</item><item>symbol</item><item><3>4</3></item><item><5 i:type=\"13\">555</5></item>"
+        )
     end
     it "builds a multi-line XML when :indent is set" do
-      ['a', 2, [3, 4], 'string', :symbol,
-       { 3 => 4 }, { 5 => { '@i:type' => '13', '@@text' => 555 }}]._to_xml(:tag => 'item', :indent => '  ').should ==
+      expect(['a', 2, [3, 4], 'string', :symbol,
+       { 3 => 4 }, { 5 => { '@i:type' => '13', '@@text' => 555 }}]._to_xml(:tag => 'item', :indent => '  ')).to eq(
         "<item>a</item>\n"      +
         "<item>2</item>\n"      +
         "<item>\n"              +
@@ -73,6 +76,7 @@ describe "support_xml.rb" do
         "<item>\n"              +
         "  <5 i:type=\"13\">555</5>\n" +
         "</item>\n"
+      )
     end
   end
 
@@ -81,12 +85,13 @@ describe "support_xml.rb" do
   context "Hash#_to_xml" do
 
     it "builds a simple XML from a single key hash" do
-      ({ 'a' => [ 1, { :c => 'd' } ] })._to_xml.should == "<a>1</a><a><c>d</c></a>"
+      expect(({ 'a' => [ 1, { :c => 'd' } ] })._to_xml).to eq "<a>1</a><a><c>d</c></a>"
     end
 
     it "understands attributes as keys starting with @ and text defined as @@text" do
-      { 'screen' => { '@width' => 1080, '@@text' => 'HD' } }._to_xml.should ==
+      expect({ 'screen' => { '@width' => 1080, '@@text' => 'HD' } }._to_xml).to eq(
         "<screen width=\"1080\">HD</screen>"
+      )
     end
 
     # Ruby 1.8 keeps hash keys in unpredictable order and the order on the tags
@@ -94,11 +99,12 @@ describe "support_xml.rb" do
     if RUBY_VERSION >= '1.9'
 
       it "builds a one-line hash by default" do
-        { 'a' => 2, :b => [1, 3, 4, { :c => { 'd' => 'something' } } ], 5 => { '@i:type' => '13', '@@text' => 555 } }._to_xml.should ==
+        expect({ 'a' => 2, :b => [1, 3, 4, { :c => { 'd' => 'something' } } ], 5 => { '@i:type' => '13', '@@text' => 555 } }._to_xml).to eq(
           '<a>2</a><b>1</b><b>3</b><b>4</b><b><c><d>something</d></c></b><5 i:type="13">555</5>'
+        )
       end
       it "builds a multi-line hash when :indent is set" do
-        { 'a' => 2, :b => [1, 3, 4, { :c => { 'd' => 'something' } } ] }._to_xml(:indent => '  ').should ==
+        expect({ 'a' => 2, :b => [1, 3, 4, { :c => { 'd' => 'something' } } ] }._to_xml(:indent => '  ')).to eq(
             "<a>2</a>"             + "\n" +
             "<b>1</b>"             + "\n" +
             "<b>3</b>"             + "\n" +
@@ -108,11 +114,12 @@ describe "support_xml.rb" do
             "    <d>something</d>" + "\n" +
             "  </c>"               + "\n" +
             "</b>"                 + "\n"
+          )
       end
 
       it "understands attributes as keys starting with @ and text defined as @@text (more complex "+
          "example for ruby 1.9)" do
-        { 'screen' => {
+        expect({ 'screen' => {
             '@width' => 1080,
             '@hight' => 720,
             '@@text' => 'HD',
@@ -125,7 +132,7 @@ describe "support_xml.rb" do
                 }
               }
             }
-          }._to_xml(:indent => '  ', :escape => true).should ==
+          }._to_xml(:indent => '  ', :escape => true)).to eq(
               "<screen width=\"1080\" hight=\"720\">"                           + "\n" +
               "  HD"                                                            + "\n" +
               "  <color max-colors=\"65535\" dinamic-resolution=\"1:1000000\">" + "\n" +
@@ -135,6 +142,7 @@ describe "support_xml.rb" do
               "    </brightness>"                                               + "\n" +
               "  </color>"                                                      + "\n" +
               "</screen>"                                                       + "\n"
+            )
       end
 
     end
@@ -143,10 +151,10 @@ describe "support_xml.rb" do
       key1 = Hash::_order('my-item')
       key2 = Hash::_order('my-item')
 
-      !!key1[Hash::RIGHTXMLSUPPORT_SORTORDERREGEXP].should == true
-      !!key2[Hash::RIGHTXMLSUPPORT_SORTORDERREGEXP].should == true
+      expect(!!key1[Hash::RIGHTXMLSUPPORT_SORTORDERREGEXP]).to be true
+      expect(!!key2[Hash::RIGHTXMLSUPPORT_SORTORDERREGEXP]).to be true
 
-      key1.should < key2
+      expect(key1).to be < key2
     end
 
     it "XML-text has all the keys sorted accordingly to the given order" do
@@ -165,7 +173,7 @@ describe "support_xml.rb" do
         Hash::_order('hoo') => 1
        }
 
-       hash.should == {
+       expect(hash).to eq(
          "foo{#1}" => 34,
          "boo{#2}" => 45,
          "zoo{#3}" => 53,
@@ -177,9 +185,9 @@ describe "support_xml.rb" do
          },
          "woo{#9}" => 3,
          "hoo{#10}" => 1
-       }
+       )
 
-      hash._to_xml(:indent => '  ').should ==
+      expect(hash._to_xml(:indent => '  ')).to eq(
           "<foo>34</foo>"    + "\n" +
           "<boo>45</boo>"    + "\n" +
           "<zoo>53</zoo>"    + "\n" +
@@ -191,6 +199,7 @@ describe "support_xml.rb" do
           "</moo>"           + "\n" +
           "<woo>3</woo>"     + "\n" +
           "<hoo>1</hoo>"     + "\n"
+        )
     end
 
   end

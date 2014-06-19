@@ -48,16 +48,16 @@ describe "RightScale::CloudApi::ResultWrapper" do
 
   context "metadata" do
     it "looks like a parsed body object but responds to metadata" do
-      @result.should == 'parsed_response'
-      @result.should be_a(String)
-      lambda { @result.metadata }.should_not raise_error
+      expect(@result).to eq 'parsed_response'
+      expect(@result).to be_a(String)
+      expect { @result.metadata }.to_not raise_error
     end
     it "contains the last respose headers and code" do
-      @result.metadata[:headers].should == @headers
-      @result.metadata[:code].should == @response.code
+      expect(@result.metadata[:headers]).to eq @headers
+      expect(@result.metadata[:code]).to eq @response.code
     end
     it "may contain the cache key" do
-      @result.metadata[:cache].should == @test_data[:vars][:cache]
+      expect(@result.metadata[:cache]).to eq @test_data[:vars][:cache]
     end
   end
 end

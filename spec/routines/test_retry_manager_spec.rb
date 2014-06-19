@@ -53,32 +53,32 @@ describe "" do
     it "works" do
       # 1st run
       @retrymanager.execute(@test_data)
-      @test_data[:vars][:retry][:count] .should     == 0
-      @test_data[:vars][:retry][:sleep_time].should == 0.2
+      expect(@test_data[:vars][:retry][:count]).to eq 0
+      expect(@test_data[:vars][:retry][:sleep_time]).to eq 0.2
 
       # 2nd run, +1 count *2 sleep
       @retrymanager.execute(@test_data)
-      @test_data[:vars][:retry][:count].should == 1
-      @test_data[:vars][:retry][:sleep_time].should == 0.4
+      expect(@test_data[:vars][:retry][:count]).to eq 1
+      expect(@test_data[:vars][:retry][:sleep_time]).to eq 0.4
 
       # 3rd run, +1 count, *2 sleep
       @retrymanager.execute(@test_data)
-      @test_data[:vars][:retry][:count].should == 2
-      @test_data[:vars][:retry][:sleep_time].should == 0.8
+      expect(@test_data[:vars][:retry][:count]).to eq 2
+      expect(@test_data[:vars][:retry][:sleep_time]).to eq 0.8
 
       #4th run, case 1: default error
       default_rm_error = "RetryManager: No more retries left."
-      lambda do
+      expect do
         @retrymanager.execute(@test_data)
-      end.should raise_error(RightScale::CloudApi::RetryManager::Error, default_rm_error)
+      end.to raise_error(RightScale::CloudApi::RetryManager::Error, default_rm_error)
 
       #4th run, case 2: cloud_error + default error
       http_error  = 'Banana.'
       expectation = "#{http_error}\n#{default_rm_error}"
       @test_data[:vars][:retry][:http] = { :code => 777, :message => http_error }
-      lambda do
+      expect do
         @retrymanager.execute(@test_data)
-      end.should raise_error(RightScale::CloudApi::RetryManager::Error, expectation)
+      end.to raise_error(RightScale::CloudApi::RetryManager::Error, expectation)
     end
   end
 end

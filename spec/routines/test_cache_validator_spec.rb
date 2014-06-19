@@ -48,9 +48,9 @@ describe "RightScale::CloudApi::CacheValidator" do
   context "cache_pattern" do
     it "fails when is has unexpected inputs" do
       # non hash input
-      lambda { @api_manager.class.cache_pattern(true) }.should raise_error(RightScale::CloudApi::CacheValidator::Error)
+      expect { @api_manager.class.cache_pattern(true) }.to raise_error(RightScale::CloudApi::CacheValidator::Error)
       # blank pattern
-      lambda { @api_manager.class.cache_pattern({}) }.should raise_error(RightScale::CloudApi::CacheValidator::Error)
+      expect { @api_manager.class.cache_pattern({}) }.to raise_error(RightScale::CloudApi::CacheValidator::Error)
     end
 
     context "pattern keys" do
@@ -60,37 +60,37 @@ describe "RightScale::CloudApi::CacheValidator" do
         @api_manager.class.cache_pattern(@cache_pattern)
       end
       it "stores all the cache patterns keys properly" do
-        @api_manager.class.options[:cache_patterns].should == [@cache_pattern]
+        expect(@api_manager.class.options[:cache_patterns]).to eq([@cache_pattern])
       end
       it "complains when a mandatory key is missing" do
         @cache_pattern.delete(:key)
-        lambda { @api_manager.class.cache_pattern(@cache_pattern) }.should raise_error(RightScale::CloudApi::CacheValidator::Error)
+        expect { @api_manager.class.cache_pattern(@cache_pattern) }.to raise_error(RightScale::CloudApi::CacheValidator::Error)
       end
       it "complains when an unsupported key is passed" do
         bad_keys = { :bad_key1 => "bad_key1", :bad_key2 => "bad_key2" }
         @cache_pattern.merge!(bad_keys)
-        lambda { @api_manager.class.cache_pattern(@cache_pattern) }.should raise_error(RightScale::CloudApi::CacheValidator::Error)
+        expect { @api_manager.class.cache_pattern(@cache_pattern) }.to raise_error(RightScale::CloudApi::CacheValidator::Error)
       end
     end
   end
 
   context "basic cache validation" do
     it "returns true when it performed validation" do
-      @cachevalidator.execute(@test_data).should be(true)
+      expect(@cachevalidator.execute(@test_data)).to be(true)
     end
     it "returns nil if there is no way to parse a response object" do
       @test_data[:response][:instance] = double(:is_io? => true)
-      @cachevalidator.execute(@test_data).should be(nil)
+      expect(@cachevalidator.execute(@test_data)).to be(nil)
     end
     it "returns nil if caching is disabled" do
       @test_data[:options].delete(:cache)
-      @cachevalidator.execute(@test_data).should be(nil)
+      expect(@cachevalidator.execute(@test_data)).to be(nil)
     end
   end
 
   context "cache validation with match" do
     before(:each) do
-      RightScale::CloudApi::Utils.should_receive(:pattern_matches?).at_least(1).and_return(true)
+      expect(RightScale::CloudApi::Utils).to receive(:pattern_matches?).at_least(1).and_return(true)
       @cache_pattern = RightScale::CloudApi::CacheValidator::ClassMethods::CACHE_PATTERN_KEYS.inject({}) { |result, k| result.merge(k  => k.to_s)}
       @cache_pattern[:sign] = double(:call => "body_to_sign")
       @test_data[:options][:cache_patterns] = [@cache_pattern]
@@ -99,29 +99,29 @@ describe "RightScale::CloudApi::CacheValidator" do
     end
     it "fails if there is a missing key" do
       @cache_pattern.delete(:key)
-      lambda { @cachevalidator.execute(@test_data) }.should raise_error(RightScale::CloudApi::CacheValidator::Error)
+      expect { @cachevalidator.execute(@test_data) }.to raise_error(RightScale::CloudApi::CacheValidator::Error)
     end
     
     context "and one record cached" do
       before(:each) do
-        @cachevalidator.should_receive(:build_cache_key).at_least(1).and_return(["some_key","some_response_body"])
-        @cachevalidator.should_receive(:log).with("New cache record created")
+        expect(@cachevalidator).to receive(:build_cache_key).at_least(1).and_return(["some_key","some_response_body"])
+        expect(@cachevalidator).to receive(:log).with("New cache record created")
         @cachevalidator.execute(@test_data)
       end
       it "succeeds when it builds a cache key for the first time" do
-        @test_data[:vars][:cache][:key].should == "some_key"
+        expect(@test_data[:vars][:cache][:key]).to eq "some_key"
       end
       it "raises CacheHit and increments a counter when cache hits" do
-        lambda { @cachevalidator.execute(@test_data) }.should raise_error(RightScale::CloudApi::CacheHit)
-        @test_data[:vars][:system][:storage][:cache]['some_key'][:hits].should == 1
-        lambda { @cachevalidator.execute(@test_data) }.should raise_error(RightScale::CloudApi::CacheHit)
-        @test_data[:vars][:system][:storage][:cache]['some_key'][:hits].should == 2
+        expect { @cachevalidator.execute(@test_data) }.to raise_error(RightScale::CloudApi::CacheHit)
+        expect(@test_data[:vars][:system][:storage][:cache]['some_key'][:hits]).to eq 1
+        expect { @cachevalidator.execute(@test_data) }.to raise_error(RightScale::CloudApi::CacheHit)
+        expect(@test_data[:vars][:system][:storage][:cache]['some_key'][:hits]).to eq 2
       end
       it "replaces a record if the same request gets a different response" do
         @test_data[:vars][:system][:storage][:cache]['some_key'][:md5] = 'corrupted'
-        @cachevalidator.should_receive(:log).with("Missed. Record is replaced")
+        expect(@cachevalidator).to receive(:log).with("Missed. Record is replaced")
         @cachevalidator.execute(@test_data)
-        @test_data[:vars][:system][:storage][:cache]['some_key'][:hits].should == 0
+        expect(@test_data[:vars][:system][:storage][:cache]['some_key'][:hits]).to eq 0
       end
     end
   end
@@ -132,21 +132,21 @@ describe "RightScale::CloudApi::CacheValidator" do
       @opts = {:response => double(:body => nil)}
     end
     it "fails when it cannot create a key" do
-      lambda { @cachevalidator.__send__(:build_cache_key, {}, @opts) }.should raise_error((RightScale::CloudApi::CacheValidator::Error))
+      expect { @cachevalidator.__send__(:build_cache_key, {}, @opts) }.to raise_error((RightScale::CloudApi::CacheValidator::Error))
     end
     it "fails when it cannot create body" do
-      lambda { @cachevalidator.__send__(:build_cache_key, {:key => 'normal_key'}, @opts) }.should raise_error(RightScale::CloudApi::CacheValidator::Error)
+      expect { @cachevalidator.__send__(:build_cache_key, {:key => 'normal_key'}, @opts) }.to raise_error(RightScale::CloudApi::CacheValidator::Error)
     end
     it "creates key and body from given inputs" do
       pattern = {:key => 'normal_key'}
       opts    = {:response => double(:body => "normal_body")}
-      @cachevalidator.__send__(:build_cache_key, pattern, opts).should == ['normal_key', 'normal_body']
+      expect(@cachevalidator.__send__(:build_cache_key, pattern, opts)).to eq(['normal_key', 'normal_body'])
     end
     it "creates key and body from given procs" do
       proc = double(:is_a? => true)
-      proc.should_receive(:call).and_return("proc_key")
+      expect(proc).to receive(:call).and_return("proc_key")
       proc_pattern = { :key => proc, :sign => double(:call => "proc_sign_call") }
-      @cachevalidator.__send__(:build_cache_key, proc_pattern, @opts).should == ['proc_key', 'proc_sign_call']
+      expect(@cachevalidator.__send__(:build_cache_key, proc_pattern, @opts)).to eq(['proc_key', 'proc_sign_call'])
     end
   end
 end
