@@ -90,8 +90,9 @@ module RightScale
           begin
             make_request_with_retries(connection, uri, http_request)
           rescue => e
-            connection.shutdown
             fail(ConnectionError, e.message)
+          ensure #ensuring we shutdown the connection, we were having some connection re-use issues and need to investigate that further
+            connection.shutdown
           end
         end
 
