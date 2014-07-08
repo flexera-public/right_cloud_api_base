@@ -24,7 +24,7 @@
 module RightScale
   module CloudApi
     class ConnectionProxy
-      
+
       class NetHttpPersistentProxy
         class Error < CloudApi::Error
         end
@@ -40,7 +40,7 @@ module RightScale
         def log(message)
           @data[:options][:cloud_api_logger].log(message, :connection_proxy, :warn)
         end
-        
+
         # Performs an HTTP request.
         #
         # @param [Hash] data The API request +data+ storage.
@@ -55,9 +55,25 @@ module RightScale
           @data = data
           @data[:response] = {}
           uri = @data[:connection][:uri]
-          
-          # Create a connection
-          connection = Net::HTTP::Persistent.new('right_cloud_api_gem')
+          # Create a new connection.
+          #
+          # There is a bug in Net::HTTP::Persistent where it allows you to reuse an SSL connection
+          # created by another instance of Net::HTTP::Persistent, if they share the same app name.
+          # To avoid this, every instance of Net::HTTP::Persistent should have its own 'name'.
+          #
+          # If your app does not care about SSL certs and keys (like AWS does) then it is safe to
+          # reuse connections.
+          #
+          # see https://github.com/drbrain/net-http-persistent/issues/45
+          #
+          app_name = if @data[:options][:connection_ca_file] ||
+                        @data[:credentials][:cert]           ||
+                        @data[:credentials][:key]
+                       'right_cloud_api_gem_%s' % Utils::generate_token
+                     else
+                       'right_cloud_api_gem'
+                     end
+          connection = Net::HTTP::Persistent.new(app_name)
 
           # Create a fake HTTP request
           fake = @data[:request][:instance]
@@ -75,7 +91,7 @@ module RightScale
             connection.shutdown
             log "Current connection closed: #{reason}"
           end
-          
+
           # Set all required options
           # P.S. :connection_retry_count, :http_connection_retry_delay are not supported by this proxy
           #
@@ -90,9 +106,8 @@ module RightScale
           begin
             make_request_with_retries(connection, uri, http_request)
           rescue => e
-            fail(ConnectionError, e.message)
-          ensure #ensuring we shutdown the connection, we were having some connection re-use issues and need to investigate that further
             connection.shutdown
+            fail(ConnectionError, e.message)
           end
         end
 
