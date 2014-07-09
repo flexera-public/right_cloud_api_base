@@ -41,6 +41,7 @@ module RightScale
           @data[:options][:cloud_api_logger].log(message, :connection_proxy, :warn)
         end
 
+
         # Performs an HTTP request.
         #
         # @param [Hash] data The API request +data+ storage.
@@ -51,21 +52,35 @@ module RightScale
         #
         def request(data)
           require "net/http/persistent"
-
-          @data = data
+          # Initialize things:
+          @data            = data
           @data[:response] = {}
-          uri = @data[:connection][:uri]
-          # Create a new connection.
-          #
-          # There is a bug in Net::HTTP::Persistent where it allows you to reuse an SSL connection
-          # created by another instance of Net::HTTP::Persistent, if they share the same app name.
-          # To avoid this, every instance of Net::HTTP::Persistent should have its own 'name'.
-          #
-          # If your app does not care about SSL certs and keys (like AWS does) then it is safe to
-          # reuse connections.
-          #
-          # see https://github.com/drbrain/net-http-persistent/issues/45
-          #
+          # Create a new HTTP request instance
+          http_request = create_new_http_request
+          # Create and tweak Net::HTTP::Persistent instance
+          connection   = create_new_persistent_connection
+          # Make a request
+          begin
+            make_request_with_retries(connection, @data[:connection][:uri], http_request)
+         rescue => e
+           connection.shutdown
+           fail(ConnectionError, e.message)
+          end
+        end
+
+
+        # Creates a new connection.
+        #
+        # There is a bug in Net::HTTP::Persistent where it allows you to reuse an SSL connection
+        # created by another instance of Net::HTTP::Persistent, if they share the same app name.
+        # To avoid this, every instance of Net::HTTP::Persistent should have its own 'name'.
+        #
+        # If your app does not care about SSL certs and keys (like AWS does) then it is safe to
+        # reuse connections.
+        #
+        # see https://github.com/drbrain/net-http-persistent/issues/45
+        #
+        def create_new_persistent_connection
           app_name = if @data[:options][:connection_ca_file] ||
                         @data[:credentials][:cert]           ||
                         @data[:credentials][:key]
@@ -74,41 +89,63 @@ module RightScale
                        'right_cloud_api_gem'
                      end
           connection = Net::HTTP::Persistent.new(app_name)
-
-          # Create a fake HTTP request
-          fake = @data[:request][:instance]
-          http_request = "Net::HTTP::#{fake.verb._camelize}"._constantize::new(fake.path)
-          if fake.is_io?
-            http_request.body_stream = fake.body
-          else
-            http_request.body = fake.body
-          end
-          fake.headers.each{|header, value| http_request[header] = value }
-          fake.raw = http_request
-
+          set_persistent_connection_options!(connection)
           # Register a callback to close current connection
           @data[:callbacks][:close_current_connection] = Proc::new do |reason|
             connection.shutdown
             log "Current connection closed: #{reason}"
           end
+          connection
+        end
 
-          # Set all required options
-          # P.S. :connection_retry_count, :http_connection_retry_delay are not supported by this proxy
-          #
-          http_request['user-agent'] ||= @data[:options][:connection_user_agent] if @data[:options].has_key?(:connection_user_agent)
-          connection.ca_file      = @data[:options][:connection_ca_file]         if @data[:options].has_key?(:connection_ca_file)
-          connection.read_timeout = @data[:options][:connection_read_timeout]    if @data[:options].has_key?(:connection_read_timeout)
-          connection.open_timeout = @data[:options][:connection_open_timeout]    if @data[:options].has_key?(:connection_open_timeout)
-          connection.cert         = OpenSSL::X509::Certificate.new(@data[:credentials][:cert]) if @data[:credentials].has_key?(:cert)
-          connection.key          = OpenSSL::PKey::RSA.new(@data[:credentials][:key])          if @data[:credentials].has_key?(:key)
 
-          # Make a request
-          begin
-            make_request_with_retries(connection, uri, http_request)
-          rescue => e
-            connection.shutdown
-            fail(ConnectionError, e.message)
+        # Sets connection_ca_file, connection_read_timeout, connection_open_timeout,
+        # connection_verify_mode and SSL cert and key
+        #
+        # @param [Net::HTTP::Persistent] connection
+        #
+        # @return [Net::HTTP::Persistent]
+        #
+        def set_persistent_connection_options!(connection)
+          [:ca_file, :read_timeout, :open_timeout, :verify_mode].each do |connection_method|
+            connection_option_name = "connection_#{connection_method}".to_sym
+            next unless @data[:options].has_key?(connection_option_name)
+            connection.__send__("#{connection_method}=", @data[:options][connection_option_name])
           end
+          if @data[:credentials].has_key?(:cert)
+            connection.cert = OpenSSL::X509::Certificate.new(@data[:credentials][:cert])
+          end
+          if @data[:credentials].has_key?(:key)
+            connection.key  = OpenSSL::PKey::RSA.new(@data[:credentials][:key])
+          end
+          connection
+        end
+
+
+        # Creates and configures a new HTTP request object
+        #
+        # @return [Net::HTTPRequest]
+        #
+        def create_new_http_request
+          # Create a new HTTP request instance
+          request_spec = @data[:request][:instance]
+          http_class   = "Net::HTTP::#{request_spec.verb._camelize}"
+          http_request = http_class._constantize::new(request_spec.path)
+          # Set the request body
+          if request_spec.is_io?
+            http_request.body_stream = request_spec.body
+          else
+            http_request.body = request_spec.body
+          end
+          # Copy headers
+          request_spec.headers.each { |header, value| http_request[header] = value }
+          # Save the new request
+          request_spec.raw = http_request
+          # Set user-agent
+          if @data[:options].has_key?(:connection_user_agent)
+            http_request['user-agent'] ||= @data[:options][:connection_user_agent]
+          end
+          http_request
         end
 
 
@@ -204,7 +241,7 @@ module RightScale
           nil
         end
 
-      end 
+      end
     end
   end
 end
