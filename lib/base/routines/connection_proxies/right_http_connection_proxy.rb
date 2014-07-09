@@ -91,7 +91,10 @@ module RightScale
           http_connection_data[:raise_on_timeout]             = @data[:options][:abort_on_timeout]        if @data[:options][:abort_on_timeout]
           http_connection_data[:cert]                         = @data[:credentials][:cert]                if @data[:credentials].has_key?(:cert)
           http_connection_data[:key]                          = @data[:credentials][:key]                 if @data[:credentials].has_key?(:key)
-            
+          if @data[:options].has_key?(:connection_verify_mode)
+            http_connection_data[:use_server_auth] = (@data[:options][:connection_verify_mode] !=  OpenSSL::SSL::VERIFY_NONE)
+          end
+
           #log "HttpConnection request: #{http_connection_data.inspect}"
 
           # Make a request:

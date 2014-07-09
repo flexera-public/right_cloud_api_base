@@ -179,6 +179,10 @@ module RightScale
       # @option options [Integer]  :connection_retry_delay
       #  Defines how long we wait on a low level connection error (in seconds)
       #
+      # @option options [Integer]  :connection_verify_mode
+      #  SSL connection cert check: either OpenSSL::SSL::VERIFY_PEER (default) or
+      #  OpenSSL::SSL::VERIFY_NONE
+      #
       # @option options [Hash]  :creds
       #   A set of optional extra creds a cloud may require
       #   (see right_cloud_stack_api gem which supports :tenant_name and :tenant_id)
