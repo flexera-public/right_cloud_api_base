@@ -85,6 +85,7 @@ module RightScale
           connection.open_timeout = @data[:options][:connection_open_timeout]    if @data[:options].has_key?(:connection_open_timeout)
           connection.cert         = OpenSSL::X509::Certificate.new(@data[:credentials][:cert]) if @data[:credentials].has_key?(:cert)
           connection.key          = OpenSSL::PKey::RSA.new(@data[:credentials][:key])          if @data[:credentials].has_key?(:key)
+          connection.verify_mode  = OpenSSL::SSL::VERIFY_NONE
 
           # Make a request
           begin
