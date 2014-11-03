@@ -116,26 +116,21 @@ module RightScale
       #
       def body=(new_body)
         # Set a request body
-        if new_body._blank?
-          @body = nil
-          self['content-length'] = 0
-        else
-          if new_body.is_a?(IO)
-            @body = file = new_body
-            # Make sure the file is openned in binmode
-            file.binmode if file.respond_to?(:binmode)
-            # Fix 'content-length': it must not be bigger than a piece of a File left to be read or a String body size.
-            # Otherwise the connection may behave like crazy causing 4xx or 5xx responses
-            # KD: Make sure this code is used with the patched RightHttpConnection gem (see net_fix.rb)
-            file_size     = file.respond_to?(:lstat) ? file.lstat.size : file.size
-            bytes_to_read = [ file_size - file.pos, self['content-length'].first ].compact.map{|v| v.to_i }.sort.first # remove nils then make values Integers
-            if self['content-length'].first._blank? || self['content-length'].first.to_i > bytes_to_read
-              self['content-length'] = bytes_to_read
-            end
-          else
-            @body = new_body
-            self['content-length'] = body.size if self['content-length'].first.to_i > body.size
+        if new_body.is_a?(IO)
+          @body = file = new_body
+          # Make sure the file is openned in binmode
+          file.binmode if file.respond_to?(:binmode)
+          # Fix 'content-length': it must not be bigger than a piece of a File left to be read or a String body size.
+          # Otherwise the connection may behave like crazy causing 4xx or 5xx responses
+          # KD: Make sure this code is used with the patched RightHttpConnection gem (see net_fix.rb)
+          file_size     = file.respond_to?(:lstat) ? file.lstat.size : file.size
+          bytes_to_read = [ file_size - file.pos, self['content-length'].first ].compact.map{|v| v.to_i }.sort.first # remove nils then make values Integers
+          if self['content-length'].first._blank? || self['content-length'].first.to_i > bytes_to_read
+            self['content-length'] = bytes_to_read
           end
+        else
+          @body = new_body.to_s
+          self['content-length'] = @body.bytesize if self['content-length'].first.to_i > @body.bytesize
         end
       end
 
@@ -164,7 +159,7 @@ module RightScale
         if is_io?
           "#{body.class.name}, size: #{body.respond_to?(:lstat) ? body.lstat.size : body.size}, pos: #{body.pos}"
         else
-          "size: #{body.to_s.size}, first #{BODY_BYTES_TO_LOG} bytes:\n#{body.to_s[0...BODY_BYTES_TO_LOG]}"
+          "size: #{body.to_s.bytesize}, first #{BODY_BYTES_TO_LOG} bytes:\n#{body.to_s[0...BODY_BYTES_TO_LOG]}"
         end
       end
     end
