@@ -1,2 +1,6 @@
 == 2013-06-28
   - pre-release candidate created
+
+== 2014-11-03
+  - Fix object._blank? issue for IO objects.
+  - version bumped to 0.1.1

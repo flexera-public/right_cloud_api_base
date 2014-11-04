@@ -49,7 +49,7 @@ module RightScale
       def self.base64en(string)
         Base64::encode64(string.to_s).strip
       end
-      
+
       # Makes a URL params string from a given hash. If block is given the it invokes the block on
       # every value so that one could escape it in his own way. If there is no block it url_encode
       # values automatically.
@@ -169,9 +169,9 @@ module RightScale
       #    :code!     => Condition, # Response code must not match Condition
       #    :response! => Condition, # Response body must not match Condition
       #    :if        => Proc::new{ |opts| do something } # Extra condition: should return true | false
-      #  
+      #
       #   (Condition above is /RegExp/ or String or Symbol) 
-      #   
+      #
       #  Opts is a Hash:
       #    :request  => Object, # HTTP request instance
       #    :response => Object, # HTTP response instance
@@ -210,7 +210,7 @@ module RightScale
         return nil if pattern[:if] && !pattern[:if].call(opts)
         true
       end
-      
+
       # Returns an Array with the current Thread and Fiber (if exists) instances.
       #
       # @return [Array] The first item is the current Thread instance and the second item
@@ -233,7 +233,7 @@ module RightScale
           end
         end
       end
-      
+
       # Transforms body (when it is a Hash) into String
       #
       # @param [Hash] body The request body as a Hash instance.
@@ -254,13 +254,14 @@ module RightScale
       def self.contentify_body(body, content_type)
         return body unless body.is_a?(Hash)
         # Transform
+        ct = dearrayify(content_type).to_s
         case dearrayify(content_type).to_s
         when /json/ then body.to_json
         when /xml/  then body._to_xml!
-        else fail        Error::new("Can't transform body from Hash into #{content_type.inspect} type String")
+        else fail        Error::new("Cannot transform Hash body into #{ct.inspect} content type")
         end
       end
-      
+
       # Generates a unique token (Uses UUID when possible)
       #
       # @return [String] A random 28-symbols string.
@@ -275,7 +276,7 @@ module RightScale
         # Use UUID gem if it is
         if defined?(UUID) && UUID::respond_to?(:new)
           uuid = UUID::new
-          return uuid.generate if uuid.respond_to?(:generate)          
+          return uuid.generate if uuid.respond_to?(:generate)
         end
         # Otherwise generate a random token
         time   = Time::now.utc
@@ -374,7 +375,7 @@ module RightScale
         end
         chain
       end
-      
+
     end
   end
 end
