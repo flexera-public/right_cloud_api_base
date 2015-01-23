@@ -83,7 +83,7 @@ module RightScale
         # Create a request
         @verb     = verb.to_s.downcase
         @path     = path
-        @raws     = raw
+        @raw      = raw
         @headers  = HTTPHeaders::new(headers)
         self.body = body
       end
@@ -122,7 +122,6 @@ module RightScale
           file.binmode if file.respond_to?(:binmode)
           # Fix 'content-length': it must not be bigger than a piece of a File left to be read or a String body size.
           # Otherwise the connection may behave like crazy causing 4xx or 5xx responses
-          # KD: Make sure this code is used with the patched RightHttpConnection gem (see net_fix.rb)
           file_size     = file.respond_to?(:lstat) ? file.lstat.size : file.size
           bytes_to_read = [ file_size - file.pos, self['content-length'].first ].compact.map{|v| v.to_i }.sort.first # remove nils then make values Integers
           if self['content-length'].first._blank? || self['content-length'].first.to_i > bytes_to_read

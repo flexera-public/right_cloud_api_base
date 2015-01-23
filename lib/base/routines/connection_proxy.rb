@@ -38,12 +38,10 @@ module RightScale
       def process
         unless @connection_proxy
           # Try to use a user defined connection proxy. The options are:
-          #  - RightScale::CloudApi::ConnectionProxy::RightHttpConnectionProxy,
           #  - RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy
           connection_proxy_class = data[:options][:connection_proxy]
           unless connection_proxy_class
             # If it is not defined then load right_http_connection gem and use it.
-            # connection_proxy_class = ConnectionProxy::RightHttpConnectionProxy
             connection_proxy_class = RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy
           end
           @connection_proxy = connection_proxy_class.new

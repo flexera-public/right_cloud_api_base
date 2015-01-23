@@ -1,6 +1,9 @@
+== 2015-01-23, current
+  - Removed RightHttpConnection gem related code
+
+== 2014-11-03, v0.2.1
+  - Fix object._blank? issue for IO objects.
+
 == 2013-06-28
   - pre-release candidate created
 
-== 2014-11-03
-  - Fix object._blank? issue for IO objects.
-  - version bumped to 0.1.1

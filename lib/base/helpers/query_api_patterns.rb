@@ -79,7 +79,7 @@ module RightScale
         #
         #       query_api_pattern 'PutObject',   :put, '{:Bucket}/{:Object}',
         #                                        :body    => Utils::MUST_BE_SET,
-        #                                        :headers => { 'content-type' => ['application/octet-stream'] }
+        #                                        :headers => { 'content-type' => ['binary/octet-stream'] }
         #       ..
         #     end
         #   end
@@ -99,7 +99,7 @@ module RightScale
         #
         #        base.query_api_pattern 'PutObject',   :put, '{:Bucket:}/{:Object:}',
         #                                              :body    => Utils::MUST_BE_SET,
-        #                                              :headers => { 'content-type' => ['application/octet-stream'] }
+        #                                              :headers => { 'content-type' => ['binary/octet-stream'] }
         #
         #        base.query_api_pattern 'UploadPartCopy', :put,'{:DestinationBucket}/{:DestinationObject}',
         #                                                 :params  => { 'partNumber' => :PartNumber, 'uploadId'   => :UploadId },

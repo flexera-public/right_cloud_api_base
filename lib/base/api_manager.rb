@@ -165,10 +165,7 @@ module RightScale
       #
       # @option options [String]  :connection_proxy
       #   Connection proxy class (when it need to be different from the default one).
-      #   Only RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy (default) and
-      #   RightScale::CloudApi::ConnectionProxy::RightHttpConnectionProxy are supported.
-      #   The last one requires 'right_http_connection' gem to be manually installed, and it is
-      #   not recommended to use because it monkey patches Net::HTTP.
+      #   Only RightScale::CloudApi::ConnectionProxy::NetHttpPersistentProxy is supported so far.
       #
       # @option options [Integer]  :connection_read_timeout
       #   Connection read timeout (in seconds).
