@@ -57,7 +57,8 @@ describe "RightScale::CloudApi::ConnectionProxy::NetHTTPPersistentProxy" do
     before :each do
       @connection = double(
         :request                => @response,
-        :retry_change_requests= => true )
+        :retry_change_requests= => true,
+        :shutdown               => true )
       expect(Net::HTTP::Persistent).to receive(:new).and_return(@connection)
     end
 

@@ -63,9 +63,9 @@ module RightScale
           begin
             make_request_with_retries(connection, @data[:connection][:uri], http_request)
           rescue => e
-           fail(ConnectionError, e.message)
+            fail(ConnectionError, e.message)
           ensure
-           connection.shutdown
+            connection.shutdown
           end
         end
 
