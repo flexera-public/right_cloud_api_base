@@ -1,4 +1,8 @@
 == 2015-01-23, current
+  - Fixed "Cannot do block-based chunk gets on S3" issue
+    https://github.com/rightscale/right_aws_api/issues/24
+
+== 2015-01-23, v0.2.1.1
   - Removed RightHttpConnection gem related code
 
 == 2014-11-03, v0.2.1

@@ -180,9 +180,12 @@ module RightScale
                 # then there is no low level retry is allowed. Otherwise we would need to reset the
                 # IO pointer, etc.
                 connection_retry_count = 0
-                # Set IO response
-                set_http_response(response)
-                response.read_body(&block)
+                if response.is_a?(Net::HTTPSuccess)
+                  set_http_response(response, :skip_body)
+                  response.read_body(&block)
+                else
+                  set_http_response(response)
+                end
               end
             else
               # Set text response
@@ -213,10 +216,10 @@ module RightScale
         #
         # @return [void]
         #
-        def set_http_response(response)
+        def set_http_response(response, skip_body=false)
           @data[:response][:instance] = HTTPResponse.new(
             response.code,
-            response.body.is_a?(IO) ? nil : response.body,
+            skip_body ? nil : response.body,
             response.to_hash,
             response
           )
