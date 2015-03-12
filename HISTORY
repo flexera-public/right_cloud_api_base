@@ -1,4 +1,4 @@
-== 2015-01-23, current
+== 2015-03-11, v0.2.2
   - Fixed "Cannot do block-based chunk gets on S3" issue
     https://github.com/rightscale/right_aws_api/issues/24
 
