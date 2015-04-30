@@ -37,6 +37,7 @@ module RightScale
                                     data[:request][:path],
                                     data[:request][:body],
                                     data[:request][:headers] )
+        cloud_api_logger.log("data: #{data.inspect}" ,         :request_generator)
         cloud_api_logger.log("Request generated: #{request.to_s}" ,         :request_generator)
         cloud_api_logger.log("Request headers:   #{request.headers_info}" , :request_generator)
         cloud_api_logger.log("Request body:      #{request.body_info}\n",   :request_generator_body) unless (request.body.to_s.size == 0)

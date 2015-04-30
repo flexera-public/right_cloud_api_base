@@ -167,6 +167,7 @@ module RightScale
           connection_retry_count = @data[:options][:connection_retry_count] || 3
           connection_retry_delay = @data[:options][:connection_retry_delay] || 0.5
           retries_performed      = 0
+          log("connection = #{connection.inspect}")
           # If block is given - pass there all the chunks of a response and then stop
           # (don't do any parsing, analysis, etc)
           block = @data[:vars][:system][:block]
