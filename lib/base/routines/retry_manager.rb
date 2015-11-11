@@ -51,7 +51,7 @@ module RightScale
       #   see http://www.awsarchitectureblog.com/2015/03/backoff.html for details
       def process
         retry_options    = @data[:options][:retry]           || {}
-        retry_strategy   = retry_options[:strategy] # nil is acceptable
+        retry_strategy   = retry_options[:strategy] # nil or garbage is acceptable
         max_retry_count  = retry_options[:count]            || DEFAULT_RETRY_COUNT
         reiteration_time = retry_options[:reiteration_time] || DEFAULT_REITERATION_TIME
         base_sleep_time  = retry_options[:sleep_time]       || DEFAULT_SLEEP_TIME
@@ -93,7 +93,7 @@ module RightScale
                        when :decorrelated_jitter
                          # sleep = random_between(base, previous_sleep * 3)
                          rand * (3*previous_sleep - base_sleep_time) + base_sleep_time
-                       else # default behavior, exponential or whatever was passed in (for external handling of retries)
+                       else # default behavior, exponential
                          base_sleep_time * 2**(attempt-1)
                        end
           @data[:vars][:retry][:previous_sleep_time] = sleep_time
