@@ -50,21 +50,129 @@ describe "" do
   end
 
   context "RightScale::CloudApi::RetryManager" do
-    it "works" do
+    it "works - default exponential" do
       # 1st run
       @retrymanager.execute(@test_data)
       expect(@test_data[:vars][:retry][:count]).to eq 0
-      expect(@test_data[:vars][:retry][:sleep_time]).to eq 0.2
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to eq nil
 
       # 2nd run, +1 count *2 sleep
       @retrymanager.execute(@test_data)
       expect(@test_data[:vars][:retry][:count]).to eq 1
-      expect(@test_data[:vars][:retry][:sleep_time]).to eq 0.4
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to eq 0.2
 
       # 3rd run, +1 count, *2 sleep
       @retrymanager.execute(@test_data)
       expect(@test_data[:vars][:retry][:count]).to eq 2
-      expect(@test_data[:vars][:retry][:sleep_time]).to eq 0.8
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to eq 0.4
+
+      #4th run, case 1: default error
+      default_rm_error = "RetryManager: No more retries left."
+      expect do
+        @retrymanager.execute(@test_data)
+      end.to raise_error(RightScale::CloudApi::RetryManager::Error, default_rm_error)
+
+      #4th run, case 2: cloud_error + default error
+      http_error  = 'Banana.'
+      expectation = "#{http_error}\n#{default_rm_error}"
+      @test_data[:vars][:retry][:http] = { :code => 777, :message => http_error }
+      expect do
+        @retrymanager.execute(@test_data)
+      end.to raise_error(RightScale::CloudApi::RetryManager::Error, expectation)
+    end
+
+    it "works full jitter" do
+      @test_data[:options][:retry][:strategy] = :full_jitter
+      @test_data[:options][:retry][:count] = 3
+      
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 0
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to eq nil
+
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 1
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to be_between(0,0.2)
+
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 2
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to be_between(0,0.4)
+
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 3
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to be_between(0,0.8)
+
+      #4th run, case 1: default error
+      default_rm_error = "RetryManager: No more retries left."
+      expect do
+        @retrymanager.execute(@test_data)
+      end.to raise_error(RightScale::CloudApi::RetryManager::Error, default_rm_error)
+
+      #4th run, case 2: cloud_error + default error
+      http_error  = 'Banana.'
+      expectation = "#{http_error}\n#{default_rm_error}"
+      @test_data[:vars][:retry][:http] = { :code => 777, :message => http_error }
+      expect do
+        @retrymanager.execute(@test_data)
+      end.to raise_error(RightScale::CloudApi::RetryManager::Error, expectation)
+    end
+
+    it "works equal jitter" do
+      @test_data[:options][:retry][:strategy] = :equal_jitter
+      @test_data[:options][:retry][:count] = 3
+      
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 0
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to eq nil
+
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 1
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to be_between(0.1,0.2)
+
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 2
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to be_between(0.2,0.4)
+
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 3
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to be_between(0.4,0.8)
+
+      #4th run, case 1: default error
+      default_rm_error = "RetryManager: No more retries left."
+      expect do
+        @retrymanager.execute(@test_data)
+      end.to raise_error(RightScale::CloudApi::RetryManager::Error, default_rm_error)
+
+      #4th run, case 2: cloud_error + default error
+      http_error  = 'Banana.'
+      expectation = "#{http_error}\n#{default_rm_error}"
+      @test_data[:vars][:retry][:http] = { :code => 777, :message => http_error }
+      expect do
+        @retrymanager.execute(@test_data)
+      end.to raise_error(RightScale::CloudApi::RetryManager::Error, expectation)
+    end
+
+    it "works decorrelated jitter" do
+      @test_data[:options][:retry][:strategy] = :decorrelated_jitter
+      @test_data[:options][:retry][:count] = 3
+      
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 0
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to eq nil
+
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 1
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to be_between(0.2,0.6)
+
+      previous_sleep_time = @test_data[:vars][:retry][:previous_sleep_time]
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 2
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to be_between(0.2,3*previous_sleep_time)
+      previous_sleep_time = @test_data[:vars][:retry][:previous_sleep_time]
+
+      previous_sleep_time = @test_data[:vars][:retry][:previous_sleep_time]
+      @retrymanager.execute(@test_data)
+      expect(@test_data[:vars][:retry][:count]).to eq 3
+      expect(@test_data[:vars][:retry][:previous_sleep_time]).to be_between(0.2,3*previous_sleep_time)
 
       #4th run, case 1: default error
       default_rm_error = "RetryManager: No more retries left."

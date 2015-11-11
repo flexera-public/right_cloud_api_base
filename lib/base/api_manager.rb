@@ -191,6 +191,14 @@ module RightScale
       #   Current logger. If is not provided then it logs to STDOUT. When if nil is given it
       #   logs to '/dev/nul'.
       #
+      # @option options [Hash] :retry
+      #   A set of options for how retry behavior works.
+      #   available retry options
+      #   :count => Integer # number of retry attempts
+      #   :strategy => Symbol # retry strategy[ :exponentional (default), :full_jitter, :equal_jitter, :decorrelated_jitter]
+      #   :reiteration_time => Integer # maximum amount of time to allow for retries
+      #   :sleep_time => Integer # base sleep time in seconds, actual sleep time depends on strategy and count
+      #
       # @option options [Symbol]  :log_filter_patterns
       #   A set of log filters that define what to log (see {RightScale::CloudApi::CloudApiLogger}).
       #
