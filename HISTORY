@@ -1,3 +1,6 @@
+== 2015-11-11, v0.2.3
+  - Add jitter style retry strategies to retry manager
+
 == 2015-03-11, v0.2.2
   - Fixed "Cannot do block-based chunk gets on S3" issue
     https://github.com/rightscale/right_aws_api/issues/24
