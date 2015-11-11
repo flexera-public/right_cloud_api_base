@@ -81,20 +81,20 @@ module RightScale
 
         # Continue (with a delay when needed)
         if attempt > 0 #only sleep on a retry
-          previous_sleep = @data[:vars][:retry][:previous_sleep_time]
+          previous_sleep = @data[:vars][:retry][:previous_sleep_time] || base_sleep_time
           sleep_time = case retry_strategy
                        when :full_jitter
                          #sleep = random_between(0, base * 2 ** attempt)
-                         rand * (base_sleep_time * 2**attempt)
+                         rand * (base_sleep_time * 2**(attempt-1))
                        when :equal_jitter
                          # sleep = temp / 2 + random_between(0, temp / 2)
-                         temp = base_sleep_time * 2 ** attempt
+                         temp = base_sleep_time * 2 **(attempt-1)
                          temp / 2 + rand * (temp / 2)
                        when :decorrelated_jitter
                          # sleep = random_between(base, previous_sleep * 3)
-                         rand * (3*previous_sleep - base_sleep_time)
+                         rand * (3*previous_sleep - base_sleep_time) + base_sleep_time
                        else # default behavior, exponential or whatever was passed in (for external handling of retries)
-                         base_sleep_time * 2**(attempt)
+                         base_sleep_time * 2**(attempt-1)
                        end
           @data[:vars][:retry][:previous_sleep_time] = sleep_time
           cloud_api_logger.log("Sleeping for #{sleep_time} seconds before retry attempt ##{attempt}", :retry_manager)
