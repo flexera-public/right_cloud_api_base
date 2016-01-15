@@ -110,6 +110,8 @@ module RightScale
           cloud_api_logger.log("Restoring file position to #{@data[:vars][:retry][:orig_body_stream_pos]}", :retry_manager)
           @data[:request][:instance].body.pos = @data[:vars][:retry][:orig_body_stream_pos]
         end
+        #request params can be removed by another manager, restore them in case this happens, looking at you AWS request signer
+        @data[:request][:params] = @data[:request][:orig_params]
       end
     end
     
