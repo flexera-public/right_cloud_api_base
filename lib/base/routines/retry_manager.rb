@@ -35,7 +35,7 @@ module RightScale
       
       DEFAULT_RETRY_COUNT      =   2
       DEFAULT_REITERATION_TIME =  10
-      DEFAULT_SLEEP_TIME       = 0.2
+      DEFAULT_SLEEP_TIME       = 1.0
       
       # Retries manager.
       # 
@@ -97,7 +97,7 @@ module RightScale
                          base_sleep_time * 2**(attempt-1)
                        end
           @data[:vars][:retry][:previous_sleep_time] = sleep_time
-          cloud_api_logger.log("Sleeping for #{sleep_time} seconds before retry attempt ##{attempt}", :retry_manager)
+          cloud_api_logger.log("Sleeping for #{sleep_time} seconds before retry attempt ##{attempt}") #always log this
           sleep(sleep_time)
         end
         
