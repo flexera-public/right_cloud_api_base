@@ -97,7 +97,7 @@ module RightScale
                          base_sleep_time * 2**(attempt-1)
                        end
           @data[:vars][:retry][:previous_sleep_time] = sleep_time
-          cloud_api_logger.log("Sleeping for #{sleep_time} seconds before retry attempt ##{attempt}") #always log this
+          cloud_api_logger.log("Sleeping for #{sleep_time} seconds before retry attempt ##{attempt}", :retry_manager)
           sleep(sleep_time)
         end
         
