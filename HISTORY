@@ -1,3 +1,6 @@
+== 2016-01-19, v0.2.4
+  - Fix a bug where retries were missing the original params because of another class clearing them out
+
 == 2015-11-11, v0.2.3
   - Add jitter style retry strategies to retry manager
 
