@@ -1,3 +1,4 @@
+
 #--
 # Copyright (c) 2013 RightScale, Inc.
 #
@@ -34,7 +35,7 @@ module RightScale
         TIMEOUT_ERRORS = /Timeout|ETIMEDOUT/
 
         # Other re-triable errors
-        OTHER_ERRORS   = /SocketError|EOFError/
+        OTHER_ERRORS   = /SocketError|EOFError|SSL_connect/
 
 
         def log(message)
