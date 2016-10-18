@@ -31,7 +31,7 @@ module RightScale
     # CloudApi gem version namespace
     module VERSION
       # The gem version
-      STRING = '0.2.5'
+      STRING = '0.2.6'
     end
   end
 end
