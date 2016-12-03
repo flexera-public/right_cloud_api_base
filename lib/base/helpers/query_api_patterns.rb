@@ -175,6 +175,7 @@ module RightScale
             params   = opts.delete(:params)   || {}
             headers  = opts.delete(:headers)  || {}
             options  = opts.delete(:options)  || {}
+            options[:method_name] = method_name
             body     = opts.delete(:body)     || nil
             # Complain if there are any unused keys left.
             fail(Error.new("#{method_name.inspect} pattern: unsupported key(s): #{opts.keys.map{|k| k.inspect}.join(',')}")) if opts.any?
