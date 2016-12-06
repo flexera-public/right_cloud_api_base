@@ -114,6 +114,7 @@ module RightScale
             next unless @data[:options].has_key?(connection_option_name)
             connection.__send__("#{connection_method}=", @data[:options][connection_option_name])
           end
+          connection.verify_mode  = OpenSSL::SSL::VERIFY_NONE #No verifying for now
           if @data[:credentials].has_key?(:cert)
             connection.cert = OpenSSL::X509::Certificate.new(@data[:credentials][:cert])
           end
