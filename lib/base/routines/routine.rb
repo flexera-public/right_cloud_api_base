@@ -28,7 +28,7 @@ module RightScale
     #
     # The routine is a very simple object that does a simple task in the API call processing stack
     # and exits. In most cases a single routine knows nothing about any other routines. It just
-    # takes incoming params from @data hash, processes it and stores back to the @adata attribute.
+    # takes incoming params from @data hash, processes it and stores back to the @data attribute.
     #
     class Routine
       attr_reader :data
