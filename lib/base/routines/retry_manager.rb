@@ -94,7 +94,6 @@ module RightScale
                          # sleep = random_between(base, previous_sleep * 3)
                          rand * (3*previous_sleep - base_sleep_time) + base_sleep_time
                        when :retry_after
-                        data[:response][:instance].headers['location']).first
                          Array((@data[:response][:instance].headers || {})["Retry-After"]).first.to_i
                        else # default behavior, exponential
                          base_sleep_time * 2**(attempt-1)
