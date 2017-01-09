@@ -195,7 +195,7 @@ module RightScale
       #   A set of options for how retry behavior works.
       #   available retry options
       #   :count => Integer # number of retry attempts
-      #   :strategy => Symbol # retry strategy[ :exponentional (default), :full_jitter, :equal_jitter, :decorrelated_jitter]
+      #   :strategy => Symbol # retry strategy[ :exponentional (default), :full_jitter, :equal_jitter, :decorrelated_jitter, :retry_after]
       #   :reiteration_time => Integer # maximum amount of time to allow for retries
       #   :sleep_time => Integer # base sleep time in seconds, actual sleep time depends on strategy and count
       #
