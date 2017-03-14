@@ -320,6 +320,7 @@ module RightScale
         cloud_api_logger.set_unique_prefix
         # Initialize @data variable and get a final set of API request options.
         options = initialize_api_request_options(verb, relative_path, opts, &block)
+        cloud_api_logger.log("DEBUG OS right_cloud_api_base data is #{@data.inspect}") if relative_path == "application/register"
         # Before_process_api_request_callback.
         invoke_callback_method(options[:before_process_api_request_callback], :manager => self)
         # Main loop
@@ -374,6 +375,7 @@ module RightScale
         invoke_callback_method(options[:after_process_api_request_callback], :manager => self)
         data[:result]
       rescue => error
+        cloud_api_logger.log("DEBUG OS right_cloud_api_base rescue #{error.class}: #{error.message}") if relative_path == "application/register"
         # Invoke :after error callback
         invoke_callback_method(options[:after_error_callback], :manager => self, :error => error)
         fail error
@@ -381,12 +383,8 @@ module RightScale
         # Remove the unique-per-request log prefix.
         cloud_api_logger.reset_unique_prefix
         # Complete stat data and invoke its callback.
-        begin
-          @data[:stat][:time_taken] = Time.now.utc - @data[:stat][:started_at] if @data[:stat]
-        rescue Exception => e
-          cloud_api_logger.log("DEBUG OS right_cloud_api_base data #{@data.inspect}")
-          cloud_api_logger.log("DEBUG OS right_cloud_api_base backtrace #{e.backtrace.join(', ')}")
-        end
+        cloud_api_logger.log("DEBUG OS right_cloud_api_base ensure data: #{@data.inspect}") if relative_path == "application/register"
+        @data[:stat][:time_taken] = Time.now.utc - @data[:stat][:started_at] if @data[:stat]
         invoke_callback_method(options[:stat_data_callback], :manager => self, :stat => self.stat, :error => error)
       end
       private :process_api_request
