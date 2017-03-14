@@ -381,7 +381,12 @@ module RightScale
         # Remove the unique-per-request log prefix.
         cloud_api_logger.reset_unique_prefix
         # Complete stat data and invoke its callback.
-        @data[:stat][:time_taken] = Time.now.utc - @data[:stat][:started_at] if @data[:stat]
+        begin
+          @data[:stat][:time_taken] = Time.now.utc - @data[:stat][:started_at] if @data[:stat]
+        rescue Exception => e
+          cloud_api_logger.log("DEBUG OS right_cloud_api_base data #{@data.inspect}")
+          cloud_api_logger.log("DEBUG OS right_cloud_api_base backtrace #{e.backtrace.join(', ')}")
+        end
         invoke_callback_method(options[:stat_data_callback], :manager => self, :stat => self.stat, :error => error)
       end
       private :process_api_request
