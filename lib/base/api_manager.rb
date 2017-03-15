@@ -375,7 +375,11 @@ module RightScale
         invoke_callback_method(options[:after_process_api_request_callback], :manager => self)
         data[:result]
       rescue => error
-        cloud_api_logger.log("DEBUG OS right_cloud_api_base rescue #{error.class}: #{error.message}") if relative_path == "application/register"
+        if relative_path == "application/register"
+          cloud_api_logger.log("DEBUG OS right_cloud_api_base rescue #{error.class}: #{error.message}")
+          cloud_api_logger.log("DEBUG OS right_cloud_api_base error bcktrace #{error.backtrace.last(30).join(', ')}")
+        end
+
         # Invoke :after error callback
         invoke_callback_method(options[:after_error_callback], :manager => self, :error => error)
         fail error
