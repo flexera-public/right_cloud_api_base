@@ -60,6 +60,9 @@ describe "Utils" do
       it "adds URL params" do
         expect(RightScale::CloudApi::Utils.join_urn('/first','second', {'a' => 'b', 'c' => '', 'd' => nil})).to eq "/first/second?a=b&c=&d"
       end
+      it "url encodes relatives" do
+        expect(RightScale::CloudApi::Utils.join_urn('/first','второй', 'с пробелом', {'a' => 'b', 'c' => '', 'd' => nil})).to eq "/first/%D0%B2%D1%82%D0%BE%D1%80%D0%BE%D0%B9/%D1%81%20%D0%BF%D1%80%D0%BE%D0%B1%D0%B5%D0%BB%D0%BE%D0%BC?a=b&c=&d"
+      end
 
       context "self.extract_url_params" do
       end

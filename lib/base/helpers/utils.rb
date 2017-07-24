@@ -50,6 +50,10 @@ module RightScale
         Base64::encode64(string.to_s).strip
       end
 
+      def self.url_encode_relative(relative)
+        relative.split('/').map(&method(:url_encode)).join('/')
+      end
+
       # Makes a URL params string from a given hash. If block is given the it invokes the block on
       # every value so that one could escape it in his own way. If there is no block it url_encode
       # values automatically.
@@ -123,6 +127,8 @@ module RightScale
           relative = relative.to_s
           # skip relative path if is blank
           next if relative._blank?
+          # OS: url_encode relative to prevent errors in haproxy
+          relative = url_encode_relative(relative)
           # KD: small hack if relative starts with '/' it should override everything before and become a absolute path
           if relative[/^\//]
             result = relative
