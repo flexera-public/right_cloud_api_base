@@ -73,12 +73,12 @@ describe "RightScale::CloudApi::ConnectionProxy::NetHTTPPersistentProxy" do
       @connection = double( :retry_change_requests= => true )
       expect(Net::HTTP::Persistent).to receive(:new).and_return(@connection)
       # failure in the connection should finish and reraise the error
-      expect(@connection).to receive(:request).and_raise(StandardError.new("Banana"))
+      expect(@connection).to receive(:request).and_raise(SocketError.new("Something went wrong"))
       expect(@connection).to receive(:shutdown)
     end
 
-    it "works" do
-      expect { @proxy.request(@test_data) }.to raise_error(Exception)
+    it "produces a correct error message" do
+      expect { @proxy.request(@test_data) }.to raise_error(RightScale::CloudApi::ConnectionError, "SocketError: Something went wrong")
     end
   end
 
@@ -135,6 +135,19 @@ describe "RightScale::CloudApi::ConnectionProxy::NetHTTPPersistentProxy" do
 
         it "makes retries on non timeout errors" do
           expect(@connection).to receive(:request).exactly(@retries_count+1).times.and_raise(SocketError)
+          expect(@proxy).to receive(:sleep).exactly(@retries_count).times
+          expect { @proxy.request(@test_data) }.to raise_error(RightScale::CloudApi::ConnectionError)
+        end
+      end
+
+      context "when there is a connection issue(Address family not supported by protocol)" do
+        before:each do
+          @retries_count = 3
+          @test_data[:options][:connection_retry_count] = @retries_count
+        end
+
+        it "makes retries" do
+          expect(@connection).to receive(:request).exactly(@retries_count+1).times.and_raise(Errno::EAFNOSUPPORT)
           expect(@proxy).to receive(:sleep).exactly(@retries_count).times
           expect { @proxy.request(@test_data) }.to raise_error(RightScale::CloudApi::ConnectionError)
         end
