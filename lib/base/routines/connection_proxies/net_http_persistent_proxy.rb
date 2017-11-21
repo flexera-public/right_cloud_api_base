@@ -35,7 +35,7 @@ module RightScale
         TIMEOUT_ERRORS = /Timeout|ETIMEDOUT/
 
         # Other re-triable errors
-        OTHER_ERRORS   = /SocketError|EOFError|SSL_connect/
+        OTHER_ERRORS   = /SocketError|EOFError|SSL_connect|EAFNOSUPPORT/
 
 
         def log(message)
@@ -195,12 +195,16 @@ module RightScale
             end
             nil
           rescue => e
+            # Parse both error message and error classname; for some errors it's not enough to parse only a message
+            custom_error_msg = "#{e.class.name}: #{e.message}"
+            # Initialize new error with full message including class name, so gw can catch it now
+            custom_error = Error.new(custom_error_msg)
             # Fail if it is an unknown error
-            fail(e) if !(e.message[TIMEOUT_ERRORS] || e.message[OTHER_ERRORS])
+            fail(custom_error) if !(custom_error_msg[TIMEOUT_ERRORS] || custom_error_msg[OTHER_ERRORS])
             # Fail if it is a Timeout and timeouts are banned
-            fail(e) if e.message[TIMEOUT_ERRORS] && !!@data[:options][:abort_on_timeout]
+            fail(custom_error) if custom_error_msg[TIMEOUT_ERRORS] && !!@data[:options][:abort_on_timeout]
             # Fail if there are no retries left...
-            fail(e) if (connection_retry_count -= 1) < 0
+            fail(custom_error) if (connection_retry_count -= 1) < 0
             # ... otherwise sleep a bit and retry.
             retries_performed += 1
             log("#{self.class.name}: Performing retry ##{retries_performed} caused by: #{e.class.name}: #{e.message}")

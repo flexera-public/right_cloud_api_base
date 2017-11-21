@@ -1,3 +1,9 @@
+== 2017-11-22, v0.2.9
+  - fix a bug with retry in net_http_persistent_proxy
+
+== 2017-01-09, v0.2.8
+  - add retry_after strategy
+
 == 2016-12-05, v0.2.7
   - add method_name to options for routines to use
 
