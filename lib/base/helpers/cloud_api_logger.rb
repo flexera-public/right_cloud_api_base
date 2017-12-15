@@ -47,7 +47,7 @@ module RightScale
       # Initializes a new logger
       #
       # @param [Hash] options A set of options
-      # @option options [String,IO] :logger  Creates a new Logger instance from teh given value.
+      # @option options [String,IO] :logger  Creates a new Logger instance from the given value.
       # @option options [NilClass]  :logger  Creates a new Logger instance that logs to STDOUT.
       # @option options [Array]     :log_filters  An array of topics to log (see {help}
       #   for list of keys)
@@ -72,6 +72,18 @@ module RightScale
         @log_filter_patterns = options[:log_filter_patterns]._blank? ? []             : Array(options[:log_filter_patterns])
       end
 
+      # Logs the message at DEBUG level
+      #
+      # @param [String] message  The given message
+      # @param [Symbol] key  The filtering key.
+      #
+      # @return [void]
+      # @example
+      #   logger.info('some text')
+      #
+      def debug(message, key = nil)
+        log(message, key, :debug)
+      end
 
       # Logs the message at INFO level
       #
@@ -152,7 +164,7 @@ module RightScale
       # @example
       #  # no example
       #
-      def log(message, key = nil, method = :debug)
+      def log(message, key = nil, method = :info)
         if !key || log_filters.include?(key) || log_filters.include?(:all)
           logger.__send__(method, "#{request_log_tag}#{filter_message(message)}")
         end
@@ -191,7 +203,7 @@ module RightScale
       #  # no example
       #
       def request_log_tag
-        @unique_prefix._blank? ? "" : "[#{@unique_prefix}] "
+        @unique_prefix._blank? ? "" : "[r:#{@unique_prefix}] "
       end
 
 

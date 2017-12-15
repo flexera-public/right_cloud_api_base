@@ -33,7 +33,7 @@ module RightScale
       end
 
       # Analyzes an HTTP response.
-      # 
+      #
       # In the case of 4xx, 5xx HTTP errors the method parses the response body to get the
       # error message. Then it tries to find an error pattern that would match to the response.
       # If the pattern found it takes the action (:retry, :abort, :disconnect_and_abort or
@@ -149,4 +149,3 @@ module RightScale
 
   end
 end
-
