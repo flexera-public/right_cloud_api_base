@@ -26,7 +26,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), 'lib/right_cloud_api_
 
 Gem::Specification.new do |spec|
   spec.name             = 'right_cloud_api_base'
-  spec.version          = '0.3.0'
+  spec.version          = RightScale::CloudApi::VERSION::STRING
   spec.authors          = ['RightScale, Inc.']
   spec.email            = 'support@rightscale.com'
   spec.summary          = 'The gem provides base Query and REST API management functionalities for ' +
