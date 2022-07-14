@@ -23,5 +23,7 @@
 
 source "https://rubygems.org"
 
+gem 'simplecov', require: false, group: :test
+
 # Load .gemspec file to avoid duplicates.
 gemspec
