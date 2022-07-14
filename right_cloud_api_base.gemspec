@@ -26,7 +26,7 @@ require File.expand_path(File.join(File.dirname(__FILE__), 'lib/right_cloud_api_
 
 Gem::Specification.new do |spec|
   spec.name             = 'right_cloud_api_base'
-  spec.version          = RightScale::CloudApi::VERSION::STRING
+  spec.version          = '0.3.0'
   spec.authors          = ['RightScale, Inc.']
   spec.email            = 'support@rightscale.com'
   spec.summary          = 'The gem provides base Query and REST API management functionalities for ' +
@@ -36,15 +36,15 @@ Gem::Specification.new do |spec|
   spec.require_path     = 'lib'
   spec.required_ruby_version = '>= 1.8.7'
 
-  spec.add_dependency 'json',                  '>= 1.0.0'
+  spec.add_dependency 'json',                  '1.8.6'
   spec.add_dependency 'ruby-hmac',             '>= 0.4.0'
-  spec.add_dependency 'libxml-ruby',           '>= 1.0.0'
+  spec.add_dependency 'libxml-ruby',           '2.8.0'
   spec.add_dependency 'net-http-persistent',   '~> 2.9'
 
   spec.add_dependency 'redcarpet', (RUBY_VERSION < '1.9') ? '= 2.3.0' : '>= 3.0.0'
 
   spec.add_development_dependency 'rspec',     '>= 2.14.0'
-  spec.add_development_dependency 'rake'
+  spec.add_development_dependency 'rake', '10.4.2'
 
   spec.description = <<-EOF
 == DESCRIPTION:
