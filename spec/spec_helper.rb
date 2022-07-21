@@ -1,3 +1,6 @@
+require 'simplecov'
+SimpleCov.start
+
 require 'right_cloud_api_base'
 require 'rspec'
 
