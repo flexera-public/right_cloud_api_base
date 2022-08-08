@@ -2,8 +2,8 @@ FROM ruby:2.1.9
 
 RUN apt-get update -qq
 
-ADD . /code/Ruby-Docker
-WORKDIR /code/Ruby-Docker
+ADD . /code/right_cloud_api_base
+WORKDIR /code/right_cloud_api_base
 
 # use the bundler version defined in the Gemfile.lock
 RUN gem install bundler -v 1.17.3
