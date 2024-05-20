@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
   spec.require_path     = 'lib'
   spec.required_ruby_version = '>= 1.8.7'
 
-  spec.add_dependency 'json',                  '1.8.6'
+  spec.add_dependency 'json',                  '~> 1.6'
   spec.add_dependency 'ruby-hmac',             '>= 0.4.0'
   spec.add_dependency 'libxml-ruby',           '2.8.0'
   spec.add_dependency 'net-http-persistent',   '~> 2.9'
