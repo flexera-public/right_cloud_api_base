@@ -1,4 +1,5 @@
-#--  -*- mode: ruby; encoding: utf-8 -*-
+# -*- mode: ruby -*-
+
 # Copyright (c) 2013 RightScale, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining
@@ -37,24 +38,24 @@ Gem::Specification.new do |spec|
   spec.required_ruby_version = '>= 1.8.7'
 
   spec.add_dependency 'json',                  '~> 1.6'
-  spec.add_dependency 'ruby-hmac',             '>= 0.4.0'
   spec.add_dependency 'libxml-ruby',           '2.8.0'
-  spec.add_dependency 'net-http-persistent',   '~> 2.9'
+  spec.add_dependency 'net-http-persistent',   '~> 3.1.0'
+  spec.add_dependency 'ruby-hmac',             '>= 0.4.0'
 
-  spec.add_dependency 'redcarpet', (RUBY_VERSION < '1.9') ? '= 2.3.0' : '>= 3.0.0'
+  spec.add_dependency 'redcarpet', RUBY_VERSION < '1.9' ? '= 2.3.0' : '>= 3.0.0'
 
-  spec.add_development_dependency 'rspec',     '>= 2.14.0'
   spec.add_development_dependency 'rake', '10.4.2'
+  spec.add_development_dependency 'rspec', '>= 2.14.0'
 
-  spec.description = <<-EOF
-== DESCRIPTION:
+  spec.description = <<~EOF
+    == DESCRIPTION:
 
-right_cloud_api_base gem.
+    right_cloud_api_base gem.
 
-The gem provides base Query and REST API management functionalities for
-Amazon, OpenStack, Rackspace, CloudStack, etc cloud services.
+    The gem provides base Query and REST API management functionalities for
+    Amazon, OpenStack, Rackspace, CloudStack, etc cloud services.
 
-EOF
+  EOF
 
   candidates      = Dir.glob('{lib,spec}/**/*') +
                     ['LICENSE', 'HISTORY', 'README.md', 'Rakefile', 'right_cloud_api_base.gemspec']
