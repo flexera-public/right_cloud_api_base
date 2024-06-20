@@ -187,7 +187,7 @@ module RightScale
             end
             nil
           rescue OpenSSL::SSL::SSLError => e
-            custom_error_msg = "#{e.class.name}: #{e.message}"
+            custom_error_msg = "OpenSSLError, no more retries: #{e.class.name}: #{e.message}"
             custom_error = Error.new(custom_error_msg)
             raise(custom_error) if custom_error_msg
             # no retries
