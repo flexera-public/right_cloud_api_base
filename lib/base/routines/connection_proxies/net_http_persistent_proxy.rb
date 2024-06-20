@@ -59,6 +59,7 @@ module RightScale
           begin
             make_request_with_retries(connection, @data[:connection][:uri], http_request)
           rescue StandardError => e
+            Merb.logger.error("NetHttpPersistentProxy ERROR: #{e.message}")
             raise(ConnectionError, e.message)
           ensure
             connection.shutdown
@@ -112,6 +113,8 @@ module RightScale
             connection.cert = OpenSSL::X509::Certificate.new(@data[:credentials][:cert])
           end
           connection.key = OpenSSL::PKey::RSA.new(@data[:credentials][:key]) if @data[:credentials].has_key?(:key)
+          connection.ssl_version = :TLSv1 # using TLSv1
+          connection.ciphers = ['RC4-SHA']
           connection
         end
 
@@ -184,6 +187,11 @@ module RightScale
               set_http_response(response)
             end
             nil
+          rescue OpenSSL::SSL::SSLError => e
+            custom_error_msg = "#{e.class.name}: #{e.message}"
+            custom_error = Error.new(custom_error_msg)
+            raise(custom_error) if custom_error_msg
+            # no retries
           rescue StandardError => e
             # Parse both error message and error classname; for some errors it's not enough to parse only a message
             custom_error_msg = "#{e.class.name}: #{e.message}"
