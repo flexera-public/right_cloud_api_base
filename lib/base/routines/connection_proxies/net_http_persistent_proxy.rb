@@ -59,7 +59,6 @@ module RightScale
           begin
             make_request_with_retries(connection, @data[:connection][:uri], http_request)
           rescue StandardError => e
-            Merb.logger.error("NetHttpPersistentProxy ERROR: #{e.message}")
             raise(ConnectionError, e.message)
           ensure
             connection.shutdown
@@ -113,7 +112,7 @@ module RightScale
             connection.cert = OpenSSL::X509::Certificate.new(@data[:credentials][:cert])
           end
           connection.key = OpenSSL::PKey::RSA.new(@data[:credentials][:key]) if @data[:credentials].has_key?(:key)
-          connection.ssl_version = 'TLSv1_2' # using TLSv1
+          connection.ssl_version = :TLSv1_2 # using TLSv1_2
           connection
         end
 
