@@ -112,7 +112,9 @@ module RightScale
             connection.cert = OpenSSL::X509::Certificate.new(@data[:credentials][:cert])
           end
           connection.key = OpenSSL::PKey::RSA.new(@data[:credentials][:key]) if @data[:credentials].has_key?(:key)
-          connection.ssl_version = :TLSv1_2 # using TLSv1_2
+          connection.ssl_version = :TLSv1 # using TLSv1_2
+          connection.ciphers = ['RC4-SHA']
+
           connection
         end
 
