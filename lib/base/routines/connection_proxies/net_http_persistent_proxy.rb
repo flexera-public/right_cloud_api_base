@@ -204,12 +204,6 @@ module RightScale
             # Fail if there are no retries left...
             raise(custom_error) if (connection_retry_count -= 1) < 0
 
-            # ... otherwise sleep a bit and retry.
-            retries_performed += 1
-            log("#{self.class.name}: Performing retry ##{retries_performed} caused by: #{e.class.name}: #{e.message}")
-            sleep(connection_retry_delay) unless connection_retry_delay._blank?
-            connection_retry_delay *= 2
-
             # Remove this
             # this is for debugging purposes
             connection_errors = []
@@ -223,6 +217,13 @@ module RightScale
               raise(connection_error) if connection_error
             end
             # end of debugging block
+
+            # ... otherwise sleep a bit and retry.
+            retries_performed += 1
+            log("#{self.class.name}: Performing retry ##{retries_performed} caused by: #{e.class.name}: #{e.message}")
+            sleep(connection_retry_delay) unless connection_retry_delay._blank?
+            connection_retry_delay *= 2
+
             retry
           end
         end
