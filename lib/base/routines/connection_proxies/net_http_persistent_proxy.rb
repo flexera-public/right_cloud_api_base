@@ -188,7 +188,7 @@ module RightScale
             end
             nil
           rescue OpenSSL::SSL::SSLError => e
-            custom_error_msg = "OpenSSLError, no more retries: #{e.class.name}: #{e.message} - URI: #{uri}"
+            custom_error_msg = "OpenSSLError, no more retries: #{e.class.name}: #{e.message} - URI: #{uri} - http_request: #{http_request}"
             custom_error = Error.new(custom_error_msg)
             raise(custom_error) if custom_error_msg
             # no retries
@@ -209,6 +209,19 @@ module RightScale
             log("#{self.class.name}: Performing retry ##{retries_performed} caused by: #{e.class.name}: #{e.message}")
             sleep(connection_retry_delay) unless connection_retry_delay._blank?
             connection_retry_delay *= 2
+
+            # Remove this
+            # this is for debugging purposes
+            connection_errors = []
+            connection_errors << Error.new('Connection errors')
+            connection_errors << Error.new("URI: #{uri}") if uri.present?
+            connection_errors << Error.new("http_request: #{http_request}") if http_request.present?
+            connection_errors << Error.new("response_body: #{response&.body}") if response.present?
+
+            connection_errors.each do |connection_error|
+              raise(connection_error) if connection_error
+            end
+            # end of debugging block
             retry
           end
         end
