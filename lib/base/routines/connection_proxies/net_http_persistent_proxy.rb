@@ -217,6 +217,7 @@ module RightScale
             connection_errors << Error.new("URI: #{uri}") if uri.present?
             connection_errors << Error.new("http_request: #{http_request}") if http_request.present?
             connection_errors << Error.new("response_body: #{response&.body}") if response.present?
+            connection_errors << Error.new("error_backtrace: #{e.backtrace}")
 
             connection_errors.each do |connection_error|
               raise(connection_error) if connection_error
