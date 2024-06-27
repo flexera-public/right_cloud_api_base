@@ -213,7 +213,7 @@ module RightScale
             # Remove this
             # this is for debugging purposes
             connection_errors = []
-            connection_errors << Error.new('Connection errors')
+            connection_errors << Error.new('Errors raised during connection attempt')
             connection_errors << Error.new("URI: #{uri}") if uri.present?
             connection_errors << Error.new("http_request: #{http_request}") if http_request.present?
             connection_errors << Error.new("response_body: #{response&.body}") if response.present?
