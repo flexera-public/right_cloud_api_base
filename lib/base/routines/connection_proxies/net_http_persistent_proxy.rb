@@ -225,15 +225,19 @@ module RightScale
           # Remove this
           # this is for debugging purposes
           connection_errors = []
-          connection_errors << Error.new('Errors raised during connection attempt')
-          connection_errors << Error.new("URI: #{uri}") if uri.present?
-          connection_errors << Error.new("http_request::body: #{http_request.body}") if http_request&.body.present?
-          if http_request&.body_stream.present?
-            connection_errors << Error.new("http_request::body_stream: #{http_request.body_stream}")
+          connection_errors << Error.new('ConnectionErrors::Errors raised during connection attempt')
+          connection_errors << Error.new("ConnectionErrors::URI: #{uri}") if uri.present?
+          if http_request&.body.present?
+            connection_errors << Error.new("ConnectionErrors::http_request::body: #{http_request.body}")
           end
-          connection_errors << Error.new("http_request::method: #{http_request.method}") if http_request.present?
-          connection_errors << Error.new("response_body: #{response&.body}") if response.present?
-          connection_errors << Error.new("error_backtrace: #{e.backtrace}")
+          if http_request&.body_stream.present?
+            connection_errors << Error.new("ConnectionErrors::http_request::body_stream: #{http_request.body_stream}")
+          end
+          if http_request.present?
+            connection_errors << Error.new("ConnectionErrors::http_request::method: #{http_request.method}")
+          end
+          connection_errors << Error.new("ConnectionErrors::response_body: #{response&.body}") if response.present?
+          connection_errors << Error.new("ConnectionErrors::error_backtrace: #{e.backtrace}")
 
           connection_errors.each do |connection_error|
             raise(connection_error) if connection_error
