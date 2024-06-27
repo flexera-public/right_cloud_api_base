@@ -188,9 +188,13 @@ module RightScale
             end
             nil
           rescue OpenSSL::SSL::SSLError => e
-            custom_error_msg = "OpenSSLError, no more retries: #{e.class.name}: #{e.message} - URI: #{uri} - http_request: #{http_request}"
+            custom_error_msg = "OpenSSLError, no more retries: #{e.class.name}: #{e.message}"
             custom_error = Error.new(custom_error_msg)
+
             raise(custom_error) if custom_error_msg
+
+            raise_debugging_messages(uri, http_request, response, e)
+
             # no retries
           rescue StandardError => e
             # Parse both error message and error classname; for some errors it's not enough to parse only a message
@@ -204,19 +208,7 @@ module RightScale
             # Fail if there are no retries left...
             raise(custom_error) if (connection_retry_count -= 1) < 0
 
-            # Remove this
-            # this is for debugging purposes
-            connection_errors = []
-            connection_errors << Error.new('Errors raised during connection attempt')
-            connection_errors << Error.new("URI: #{uri}") if uri.present?
-            connection_errors << Error.new("http_request: #{http_request}") if http_request.present?
-            connection_errors << Error.new("response_body: #{response&.body}") if response.present?
-            connection_errors << Error.new("error_backtrace: #{e.backtrace}")
-
-            connection_errors.each do |connection_error|
-              raise(connection_error) if connection_error
-            end
-            # end of debugging block
+            raise_debugging_messages(uri, http_request, response, e)
 
             # ... otherwise sleep a bit and retry.
             retries_performed += 1
@@ -226,6 +218,27 @@ module RightScale
 
             retry
           end
+        end
+
+        # remove this method
+        def raise_debugging_messages(uri, http_request, response, e)
+          # Remove this
+          # this is for debugging purposes
+          connection_errors = []
+          connection_errors << Error.new('Errors raised during connection attempt')
+          connection_errors << Error.new("URI: #{uri}") if uri.present?
+          connection_errors << Error.new("http_request::body: #{http_request.body}") if http_request&.body.present?
+          if http_request&.body_stream.present?
+            connection_errors << Error.new("http_request::body_stream: #{http_request.body_stream}")
+          end
+          connection_errors << Error.new("http_request::method: #{http_request.method}") if http_request.present?
+          connection_errors << Error.new("response_body: #{response&.body}") if response.present?
+          connection_errors << Error.new("error_backtrace: #{e.backtrace}")
+
+          connection_errors.each do |connection_error|
+            raise(connection_error) if connection_error
+          end
+          # end of debugging block
         end
 
         # Saves HTTP Response into data hash.
