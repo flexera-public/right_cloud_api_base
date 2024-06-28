@@ -239,9 +239,7 @@ module RightScale
           connection_errors << Error.new("ConnectionErrors::response_body: #{response&.body}") if response.present?
           connection_errors << Error.new("ConnectionErrors::error_backtrace: #{e.backtrace}")
 
-          connection_errors.each do |connection_error|
-            raise(connection_error) if connection_error
-          end
+          raise(connection_errors.join("\n")) if connection_errors.any?
           # end of debugging block
         end
 
