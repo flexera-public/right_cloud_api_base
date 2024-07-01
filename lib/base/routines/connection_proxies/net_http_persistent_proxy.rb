@@ -226,7 +226,7 @@ module RightScale
           # this is for debugging purposes
           connection_errors = []
           connection_errors << Error.new('ConnectionErrors::Errors raised during connection attempt')
-          connection_errors << Error.new("ConnectionErrors::URI: #{uri}") if uri.present?
+          connection_errors << Error.new("ConnectionErrors::URI: #{uri}") if uri
           if http_request&.body.present?
             connection_errors << Error.new("ConnectionErrors::http_request::body: #{http_request.body}")
           end
