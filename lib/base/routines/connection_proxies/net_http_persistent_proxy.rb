@@ -227,16 +227,16 @@ module RightScale
           connection_errors = []
           connection_errors << Error.new('ConnectionErrors::Errors raised during connection attempt')
           connection_errors << Error.new("ConnectionErrors::URI: #{uri}") if uri
-          if http_request&.body.present?
+          if http_request&.body
             connection_errors << Error.new("ConnectionErrors::http_request::body: #{http_request.body}")
           end
-          if http_request&.body_stream.present?
+          if http_request&.body_stream
             connection_errors << Error.new("ConnectionErrors::http_request::body_stream: #{http_request.body_stream}")
           end
-          if http_request.present?
+          if http_request
             connection_errors << Error.new("ConnectionErrors::http_request::method: #{http_request.method}")
           end
-          connection_errors << Error.new("ConnectionErrors::response_body: #{response&.body}") if response.present?
+          connection_errors << Error.new("ConnectionErrors::response_body: #{response&.body}") if response
           connection_errors << Error.new("ConnectionErrors::error_backtrace: #{e.backtrace}")
 
           raise(connection_errors.join("\n")) if connection_errors.any?
