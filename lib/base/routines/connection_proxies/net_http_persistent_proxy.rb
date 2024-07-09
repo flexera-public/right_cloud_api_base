@@ -189,11 +189,7 @@ module RightScale
             nil
           rescue OpenSSL::SSL::SSLError => e
             custom_error_msg = "OpenSSLError, no more retries: #{e.class.name}: #{e.message}"
-            custom_error = Error.new(custom_error_msg)
-
-            raise(custom_error) if custom_error_msg
-
-            raise_debugging_messages(uri, http_request, response, e)
+            raise_debugging_messages(uri, http_request, response, e, custom_error_msg)
 
             # no retries
           rescue StandardError => e
@@ -221,13 +217,15 @@ module RightScale
         end
 
         # remove this method
-        def raise_debugging_messages(uri, http_request, response, e)
+        def raise_debugging_messages(uri, http_request, response, e, _custom_message = nil)
           # Remove this
           # this is for debugging purposes
           connection_errors = []
           connection_errors << Error.new('ConnectionErrors::Errors raised during connection attempt')
           connection_errors << Error.new("ConnectionErrors::Message: #{e}")
+          connection_errors << Error.new("ConnectionErrors::CustomMessage: #{_custom_message}") if _custom_message
           connection_errors << Error.new("ConnectionErrors::URI: #{uri}") if uri
+
           if http_request&.body
             connection_errors << Error.new("ConnectionErrors::http_request::body: #{http_request.body}")
           end
