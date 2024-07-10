@@ -127,6 +127,10 @@ module RightScale
           request_spec = @data[:request][:instance]
           http_class   = "Net::HTTP::#{request_spec.verb._camelize}"
           http_request = http_class._constantize.new(request_spec.path)
+
+          Merb.logger.info "Net::HTTP request url: #{@data[:connection][:uri]}"
+          Merb.logger.info "Net::HTTP request body: #{request_spec.body}"
+
           # Set the request body
           if request_spec.is_io?
             http_request.body_stream = request_spec.body
