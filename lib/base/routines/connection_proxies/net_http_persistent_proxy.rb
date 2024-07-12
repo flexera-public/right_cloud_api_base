@@ -128,6 +128,14 @@ module RightScale
           http_class   = "Net::HTTP::#{request_spec.verb._camelize}"
           http_request = http_class._constantize.new(request_spec.path)
 
+          #####################################
+          ######### ssl setup #################
+          # might need to conditionally configure this
+          http_request.use_ssl = true
+          http_request.verify_mode = OpenSSL::SSL::VERIFY_NONE
+          http_request.ssl_version = :TLSv1_2
+          #####################################
+
           Merb.logger.info "Net::HTTP request url: #{@data[:connection][:uri]}"
           Merb.logger.info "Net::HTTP request body: #{request_spec.body}"
 
