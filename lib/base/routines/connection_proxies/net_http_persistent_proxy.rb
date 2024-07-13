@@ -169,14 +169,6 @@ module RightScale
           # (don't do any parsing, analysis, etc)
           block = @data[:vars][:system][:block]
 
-          #####################################
-          ######### ssl setup #################
-          # might need to conditionally configure this
-          connection.use_ssl = true
-          connection.verify_mode = OpenSSL::SSL::VERIFY_NONE
-          connection.ssl_version = :TLSv1_2
-          #####################################
-
           begin
             if block
               # Response.body is a Net::ReadAdapter instance - it can't be read as a string.
