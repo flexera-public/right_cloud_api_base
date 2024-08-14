@@ -197,7 +197,7 @@ module RightScale
             custom_error_msg = "OpenSSLError, no more retries: #{e.class.name}: #{e.message}"
             raise_debugging_messages(uri, http_request, response, e, custom_error_msg)
 
-            # no retries
+            retry
           rescue StandardError => e
             # Parse both error message and error classname; for some errors it's not enough to parse only a message
             custom_error_msg = "#{e.class.name}: #{e.message}"
