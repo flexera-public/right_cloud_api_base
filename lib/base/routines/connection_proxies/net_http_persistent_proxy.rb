@@ -193,26 +193,6 @@ module RightScale
               set_http_response(response)
             end
             nil
-          rescue OpenSSL::SSL::SSLError => e
-            custom_error_msg = "OpenSSLError, no more retries: #{e.class.name}: #{e.message}"
-            # Initialize new error with full message including class name, so gw can catch it now
-            custom_error = Error.new(custom_error_msg)
-            # Fail if it is an unknown error
-            raise(custom_error) unless custom_error_msg[TIMEOUT_ERRORS] || custom_error_msg[OTHER_ERRORS]
-            # Fail if it is a Timeout and timeouts are banned
-            raise(custom_error) if custom_error_msg[TIMEOUT_ERRORS] && !!@data[:options][:abort_on_timeout]
-            # Fail if there are no retries left...
-            raise(custom_error) if (connection_retry_count -= 1) < 0
-
-            raise_debugging_messages(uri, http_request, response, e)
-
-            # ... otherwise sleep a bit and retry.
-            retries_performed += 1
-            log("#{self.class.name}: Performing retry ##{retries_performed} caused by: #{e.class.name}: #{e.message}")
-            sleep(connection_retry_delay) unless connection_retry_delay._blank?
-            connection_retry_delay *= 2
-
-            retry
           rescue StandardError => e
             # Parse both error message and error classname; for some errors it's not enough to parse only a message
             custom_error_msg = "#{e.class.name}: #{e.message}"
@@ -260,8 +240,8 @@ module RightScale
           connection_errors << Error.new("ConnectionErrors::error_backtrace: #{e.backtrace}")
 
           raise(connection_errors.join("\n")) if connection_errors.any?
-          # end of debugging block
         end
+        # end of debugging block
 
         # Saves HTTP Response into data hash.
         #
