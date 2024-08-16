@@ -39,7 +39,7 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency 'json',                  '~> 1.6'
   spec.add_dependency 'libxml-ruby',           '2.8.0'
-  spec.add_dependency 'net-http-persistent',   '~> 3.1.0'
+  spec.add_dependency 'net-http-persistent',   '>= 3.1.0'
   spec.add_dependency 'ruby-hmac',             '>= 0.4.0'
 
   spec.add_dependency 'redcarpet', RUBY_VERSION < '1.9' ? '= 2.3.0' : '>= 3.0.0'
