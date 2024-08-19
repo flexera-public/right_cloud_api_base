@@ -167,7 +167,6 @@ module RightScale
           # If block is given - pass there all the chunks of a response and then stop
           # (don't do any parsing, analysis, etc)
           block = @data[:vars][:system][:block]
-
           begin
             if block
               # Response.body is a Net::ReadAdapter instance - it can't be read as a string.
@@ -191,55 +190,25 @@ module RightScale
               set_http_response(response)
             end
             nil
-          rescue StandardError => e
+          rescue => e
             # Parse both error message and error classname; for some errors it's not enough to parse only a message
             custom_error_msg = "#{e.class.name}: #{e.message}"
             # Initialize new error with full message including class name, so gw can catch it now
             custom_error = Error.new(custom_error_msg)
             # Fail if it is an unknown error
-            raise(custom_error) unless custom_error_msg[TIMEOUT_ERRORS] || custom_error_msg[OTHER_ERRORS]
+            fail(custom_error) if !(custom_error_msg[TIMEOUT_ERRORS] || custom_error_msg[OTHER_ERRORS])
             # Fail if it is a Timeout and timeouts are banned
-            raise(custom_error) if custom_error_msg[TIMEOUT_ERRORS] && !!@data[:options][:abort_on_timeout]
+            fail(custom_error) if custom_error_msg[TIMEOUT_ERRORS] && !!@data[:options][:abort_on_timeout]
             # Fail if there are no retries left...
-            raise(custom_error) if (connection_retry_count -= 1) < 0
-
-            raise_debugging_messages(uri, http_request, response, e)
-
+            fail(custom_error) if (connection_retry_count -= 1) < 0
             # ... otherwise sleep a bit and retry.
             retries_performed += 1
             log("#{self.class.name}: Performing retry ##{retries_performed} caused by: #{e.class.name}: #{e.message}")
             sleep(connection_retry_delay) unless connection_retry_delay._blank?
             connection_retry_delay *= 2
-
             retry
           end
         end
-
-        # remove this method
-        def raise_debugging_messages(uri, http_request, response, e, _custom_message = nil)
-          # Remove this
-          # this is for debugging purposes
-          connection_errors = []
-          connection_errors << Error.new('ConnectionErrors::Errors raised during connection attempt')
-          connection_errors << Error.new("ConnectionErrors::Message: #{e}")
-          connection_errors << Error.new("ConnectionErrors::CustomMessage: #{_custom_message}") if _custom_message
-          connection_errors << Error.new("ConnectionErrors::URI: #{uri}") if uri
-
-          if http_request&.body
-            connection_errors << Error.new("ConnectionErrors::http_request::body: #{http_request.body}")
-          end
-          if http_request&.body_stream
-            connection_errors << Error.new("ConnectionErrors::http_request::body_stream: #{http_request.body_stream}")
-          end
-          if http_request
-            connection_errors << Error.new("ConnectionErrors::http_request::method: #{http_request.method}")
-          end
-          connection_errors << Error.new("ConnectionErrors::response_body: #{response&.body}") if response
-          connection_errors << Error.new("ConnectionErrors::error_backtrace: #{e.backtrace}")
-
-          raise(connection_errors.join("\n")) if connection_errors.any?
-        end
-        # end of debugging block
 
         # Saves HTTP Response into data hash.
         #
