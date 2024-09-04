@@ -1,4 +1,3 @@
-
 #--
 # Copyright (c) 2013 RightScale, Inc.
 #
@@ -25,11 +24,9 @@
 module RightScale
   module CloudApi
     class ConnectionProxy
-
       class NetHttpPersistentProxy
         class Error < CloudApi::Error
         end
-
 
         # Known timeout errors
         TIMEOUT_ERRORS = /Timeout|ETIMEDOUT/
@@ -37,11 +34,9 @@ module RightScale
         # Other re-triable errors
         OTHER_ERRORS   = /SocketError|EOFError|SSL_connect|EAFNOSUPPORT/
 
-
         def log(message)
           @data[:options][:cloud_api_logger].log(message, :connection_proxy, :warn)
         end
-
 
         # Performs an HTTP request.
         #
@@ -52,7 +47,7 @@ module RightScale
         # :connection_retry_count, :connection_retry_delay, :cloud_api_logger
         #
         def request(data)
-          require "net/http/persistent"
+          require 'net/http/persistent'
           # Initialize things:
           @data            = data
           @data[:response] = {}
@@ -63,13 +58,12 @@ module RightScale
           # Make a request
           begin
             make_request_with_retries(connection, @data[:connection][:uri], http_request)
-          rescue => e
-            fail(ConnectionError, e.message)
+          rescue StandardError => e
+            raise(ConnectionError, e.message)
           ensure
             connection.shutdown
           end
         end
-
 
         # Creates a new connection.
         #
@@ -86,20 +80,19 @@ module RightScale
           app_name = if @data[:options][:connection_ca_file] ||
                         @data[:credentials][:cert]           ||
                         @data[:credentials][:key]
-                       'right_cloud_api_gem_%s' % Utils::generate_token
+                       'right_cloud_api_gem_%s' % Utils.generate_token
                      else
                        'right_cloud_api_gem'
                      end
-          connection = Net::HTTP::Persistent.new(app_name)
+          connection = Net::HTTP::Persistent.new(name: app_name)
           set_persistent_connection_options!(connection)
           # Register a callback to close current connection
-          @data[:callbacks][:close_current_connection] = Proc::new do |reason|
+          @data[:callbacks][:close_current_connection] = proc do |reason|
             connection.shutdown
             log "Current connection closed: #{reason}"
           end
           connection
         end
-
 
         # Sets connection_ca_file, connection_read_timeout, connection_open_timeout,
         # connection_verify_mode and SSL cert and key
@@ -109,20 +102,20 @@ module RightScale
         # @return [Net::HTTP::Persistent]
         #
         def set_persistent_connection_options!(connection)
-          [:ca_file, :read_timeout, :open_timeout, :verify_mode].each do |connection_method|
+          %i[ca_file read_timeout open_timeout verify_mode].each do |connection_method|
             connection_option_name = "connection_#{connection_method}".to_sym
             next unless @data[:options].has_key?(connection_option_name)
+
             connection.__send__("#{connection_method}=", @data[:options][connection_option_name])
           end
           if @data[:credentials].has_key?(:cert)
             connection.cert = OpenSSL::X509::Certificate.new(@data[:credentials][:cert])
           end
-          if @data[:credentials].has_key?(:key)
-            connection.key  = OpenSSL::PKey::RSA.new(@data[:credentials][:key])
-          end
+          connection.key = OpenSSL::PKey::RSA.new(@data[:credentials][:key]) if @data[:credentials].has_key?(:key)
+          connection.ssl_version = :TLSv1_2 # using TLSv1.2
+
           connection
         end
-
 
         # Creates and configures a new HTTP request object
         #
@@ -132,7 +125,11 @@ module RightScale
           # Create a new HTTP request instance
           request_spec = @data[:request][:instance]
           http_class   = "Net::HTTP::#{request_spec.verb._camelize}"
-          http_request = http_class._constantize::new(request_spec.path)
+          http_request = http_class._constantize.new(request_spec.path)
+
+          Merb.logger.info "Net::HTTP request url: #{@data[:connection][:uri]}"
+          Merb.logger.info "Net::HTTP request body: #{request_spec.body}"
+
           # Set the request body
           if request_spec.is_io?
             http_request.body_stream = request_spec.body
@@ -149,7 +146,6 @@ module RightScale
           end
           http_request
         end
-
 
         # Makes request with low level retries.
         #
@@ -214,14 +210,13 @@ module RightScale
           end
         end
 
-
         # Saves HTTP Response into data hash.
         #
         # @param [Net::HTTPResponse] response
         #
         # @return [void]
         #
-        def set_http_response(response, skip_body=false)
+        def set_http_response(response, skip_body = false)
           @data[:response][:instance] = HTTPResponse.new(
             response.code,
             skip_body ? nil : response.body,
@@ -230,7 +225,6 @@ module RightScale
           )
           nil
         end
-
 
         # Net::HTTP::Persistent believes that it can retry on any GET call what is not true for
         # Query like API clouds (Amazon, CloudStack, Euca, etc).
@@ -244,12 +238,11 @@ module RightScale
         def disable_net_http_persistent_retries(connection)
           connection.retry_change_requests = false
           # Monkey patch this connection instance only.
-          def connection.can_retry?(*args)
+          def connection.can_retry?(*_args)
             false
           end
           nil
         end
-
       end
     end
   end
